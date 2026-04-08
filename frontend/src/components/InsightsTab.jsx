@@ -83,6 +83,29 @@ export default function InsightsTab() {
   const domains = ['Body', 'Mind', 'Mood', 'Vices', 'Career', 'Finance', 'Relations', 'Environment', 'Reflect'];
 
   // ==========================================
+  // MOTIVATION TRANSPARENCY (Intrinsic vs Extrinsic)
+  // ==========================================
+  const calculateIEI = (entry) => {
+    if (!entry) return { date: '', score: 50 };
+    let score = 50; // starts neutral
+    
+    // Extrinsic Signals (Hurried, minimal reflection, phone addiction)
+    if (!entry.reflect?.gratitude || entry.reflect.gratitude.length < 5) score -= 20;
+    if (!entry.reflect?.wins || entry.reflect.wins.length < 5) score -= 10;
+    if (Number(entry.vices?.screenT || 0) > 4.5) score -= 10;
+    
+    // Intrinsic Signals (Depth, intentionality, social connection)
+    if (entry.reflect?.gratitude && entry.reflect.gratitude.length > 20) score += 20;
+    if (entry.reflect?.struggles && entry.reflect.struggles.length > 15) score += 15;
+    if (entry.relations?.meaningConvo === 'yes') score += 15;
+    
+    return {
+      date: new Date(entry.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+      score: Math.max(0, Math.min(100, score)) // clamp 0-100
+    };
+  };
+
+  // ==========================================
   // BEHAVIORAL INTELLIGENCE ENGINE (Insight Generator)
   // ==========================================
   const generateInsights = () => {
@@ -175,6 +198,23 @@ export default function InsightsTab() {
       });
     }
 
+    // 5. Motivation Override (Grace Pause)
+    const recent7IEI = last7.map(e => calculateIEI(e).score); 
+    if (recent7IEI.length >= 3) {
+      const avgIEI = recent7IEI.reduce((a,b)=>a+b, 0) / recent7IEI.length;
+      if (avgIEI < 40) {
+        rawInsights.push({
+          id: 'motivation-compulsion',
+          category: 'System Override',
+          icon: '☕',
+          color: '#555555',
+          title: 'Autopilot Tracking Detected',
+          text: `Your recent logs have been completely devoid of reflection. You are speed-tracking just to maintain the streak. Remember: the system serves you, you do not serve the system.`,
+          action: 'Take a 3-Day Reset. Stop tracking immediately. Streaks will be mathematically frozen.'
+        });
+      }
+    }
+
     return rawInsights.filter(insight => !dismissedInsights.includes(insight.id));
   };
   
@@ -247,6 +287,8 @@ export default function InsightsTab() {
       mood: Number(e.mood.mood),
       date: e.date
     }));
+
+  const motivationSpectrumData = recent14.map(e => calculateIEI(e));
 
   // ==========================================
   // BEHAVIORAL FEEDBACK LOOP (A/B Testing Signal)
@@ -336,9 +378,32 @@ export default function InsightsTab() {
       {/* DASHBOARD CHARTS */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
         
+        {/* MOTIVATION SPECTRUM VISUALIZER */}
+        <div className="stats-card" style={{ background: '#fff' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            Motivation Transparency
+            <span style={{ fontSize: '10px', background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '4px', color: '#555', fontWeight: 500 }}>BETA</span>
+          </h3>
+          <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Intrinsic Quality (Deep Blue) vs. Autopilot Compulsion (Silver)</p>
+          <div style={{ height: '300px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={motivationSpectrumData}>
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} axisLine={false} tickLine={false} />
+                <YAxis hide domain={[0, 100]} />
+                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} contentStyle={{ borderRadius: '4px', fontSize: '12px' }} formatter={(v) => [`${v}/100`, "Quality Score"]} />
+                <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                  {motivationSpectrumData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.score >= 70 ? '#185FA5' : (entry.score <= 40 ? '#D1D5DB' : '#9CA3AF')} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         {/* 1. NINE-DOMAIN RADAR */}
         <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>1. Life Area Balance</h3>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Life Area Balance</h3>
           <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Normalized aggregate scoring across 9 dimensions.</p>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -351,10 +416,12 @@ export default function InsightsTab() {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
         {/* 2. LONG TERM TRENDS */}
         <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>2. Weekly Trendlines</h3>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Weekly Trendlines</h3>
           <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Momentum of 3 critical variables over time.</p>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">

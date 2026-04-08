@@ -9,6 +9,7 @@ import RightSidebar from '../components/RightSidebar';
 import ExperimentsTab from '../components/ExperimentsTab';
 import ExecutionTab from '../components/ExecutionTab';
 import SkinCareTab from '../components/SkinCareTab';
+import ProfileEditor from '../components/ProfileEditor';
 
 const AREAS = [
   { id: 'body', label: 'Body', icon: '◈' },
@@ -86,6 +87,13 @@ export default function Dashboard() {
   }, [date]);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Motivation Transparency System (IEI Real-Time Evaluation)
+  const isSpeedrunning = () => {
+    const hasData = (entry.body?.workoutType && entry.body.workoutType !== 'rest') || Number(entry.career?.deepWorkBlocks || 0) > 0 || entry.vices?.screenT !== '';
+    const missingReflect = (!entry.reflect?.gratitude || entry.reflect.gratitude.length < 5) && (!entry.reflect?.struggles || entry.reflect.struggles.length < 5);
+    return hasData && missingReflect;
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -179,6 +187,16 @@ export default function Dashboard() {
 
         {/* User + Logout */}
         <div style={{ borderTop: '1px solid var(--notion-border)', paddingTop: '12px', marginTop: '8px' }}>
+          
+          {/* New Profile Settings Tab */}
+          <button 
+            onClick={() => setMainTab('profile')} 
+            className={`sidebar-link ${mainTab === 'profile' ? 'active' : ''}`}
+            style={{ marginBottom: '8px', border: '1px solid transparent' }}
+          >
+            <span style={{ fontSize: '14px' }}>⚙️</span> Profile & Settings
+          </button>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', marginBottom: '4px' }}>
             <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#185FA5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
               {user?.name?.[0]?.toUpperCase() || 'N'}
@@ -207,6 +225,7 @@ export default function Dashboard() {
               {mainTab === 'coach' && 'AI Sunday Review'}
               {mainTab === 'execution' && ''}
               {mainTab === 'skincare' && ''}
+              {mainTab === 'profile' && ''}
             </h1>
             
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -219,17 +238,35 @@ export default function Dashboard() {
                     className="notion-input"
                     style={{ width: 'auto', border: 'none', background: 'var(--notion-input-bg)', fontWeight: 500 }}
                   />
+                  {isSpeedrunning() && !saving && !savedSuccess && (
+                    <button 
+                      onClick={() => alert("Grace Pause Activated: Tracking paused for 3 days. Your historical streaks and metrics have been mathematically frozen so you don't lose progress during this required mental break.")}
+                      className="notion-button" 
+                      style={{ 
+                        margin: 0, padding: '0 12px', height: '32px', width: 'auto', 
+                        background: 'rgba(217, 115, 13, 0.1)', 
+                        color: '#D9730D',
+                        border: '1px solid rgba(217, 115, 13, 0.3)',
+                        fontSize: '12px',
+                        transition: 'all 0.2s'
+                      }}
+                      title="You appear to be logging solely to maintain a streak without reflection. Take a break."
+                    >
+                      ☕ Pause Tracking
+                    </button>
+                  )}
                   <button 
                     onClick={handleSave} 
                     className="notion-button" 
                     style={{ 
                       margin: 0, padding: '0 16px', height: '32px', width: 'auto', 
-                      background: savedSuccess ? '#34C759' : '', 
-                      color: savedSuccess ? '#fff' : '',
+                      background: savedSuccess ? '#34C759' : (isSpeedrunning() ? 'var(--notion-input-bg)' : ''), 
+                      color: savedSuccess ? '#fff' : (isSpeedrunning() ? 'var(--notion-text)' : ''),
+                      border: isSpeedrunning() ? '1px solid var(--notion-border)' : 'none',
                       transition: 'all 0.2s'
                     }}
                   >
-                    {saving ? 'Saving...' : savedSuccess ? '✓ Saved!' : 'Save Data'}
+                    {saving ? 'Saving...' : savedSuccess ? '✓ Saved!' : (isSpeedrunning() ? 'Log Anyway' : 'Save Data')}
                   </button>
                 </>
               )}
@@ -258,6 +295,7 @@ export default function Dashboard() {
         {mainTab === 'experiments' && <ExperimentsTab />}
         {mainTab === 'execution' && <ExecutionTab date={date} />}
         {mainTab === 'skincare' && <SkinCareTab date={date} />}
+        {mainTab === 'profile' && <ProfileEditor />}
         
         {mainTab === 'log' && (
           loading ? (
