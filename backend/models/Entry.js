@@ -5,10 +5,39 @@ const entrySchema = new mongoose.Schema({
   date: { type: String, required: true }, // 'YYYY-MM-DD'
   
   body: {
-    steps: Number, weight: Number, sleepH: Number, water: Number,
-    sleepQ: Number, exercise: String, exerciseMin: Number,
-    skAM: String, skPM: String, ateQ: String, meals: Number,
-    hubermanSunlight: String, zone2Cardio: Number
+    // Sleep
+    sleepH: Number,
+    sleepBedtime: String,       // e.g. "23:30"
+    sleepWakeTime: String,      // e.g. "07:00"
+    sleepQ: Number,             // 1-10 quality rating
+    wakeWithoutAlarm: String,   // yes/no
+    
+    // Training
+    workoutType: String,        // strength/hiit/cardio/yoga/sport/walk/rest
+    muscleGroup: String,        // push/pull/legs/full/core/none
+    exerciseMin: Number,
+    zone2Cardio: Number,        // mins
+    prHit: String,              // yes/no
+    steps: Number,
+    
+    // Nutrition
+    meals: Number,
+    proteinGrams: Number,
+    ifFasting: String,          // yes/no
+    firstMealTime: String,      // e.g. "12:00"
+    ateJunk: String,            // yes/no
+    
+    // Hydration & Sunlight
+    water: Number,
+    hubermanSunlight: String,   // yes/no
+    
+    // Recovery & Biohacking
+    coldShower: String,         // yes/no
+    restingHR: Number,
+    hrv: Number,
+    weight: Number,
+    creatine: String,           // yes/no
+    supplements: String,        // free text
   },
   mind: {
     meditation: String, meditMin: Number, journaling: String,

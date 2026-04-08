@@ -29,7 +29,7 @@ export default function Dashboard() {
   
   // Entire state mapped to MongoDB Schema explicitly 
   const [entry, setEntry] = useState({
-    body: { steps: '', weight: '', sleepH: '', water: '', sleepQ: '', exercise: '', exerciseMin: '', skAM: '', skPM: '', ateQ: '', meals: '', hubermanSunlight: '', zone2Cardio: '' },
+    body: { sleepH: '', sleepBedtime: '', sleepWakeTime: '', sleepQ: 7, wakeWithoutAlarm: 'no', workoutType: 'rest', muscleGroup: 'none', exerciseMin: '', zone2Cardio: '', prHit: 'no', steps: '', meals: '', proteinGrams: '', ifFasting: 'no', firstMealTime: '', ateJunk: 'no', water: '', hubermanSunlight: 'no', coldShower: 'no', restingHR: '', hrv: '', weight: '', creatine: 'no', supplements: '' },
     mind: { meditation: '', meditMin: '', journaling: '', reading: '', readMin: '', learning: '', learnNote: '', gogginsHardThing: '' },
     mood: { mood: '', energy: '', focus: '', anxiety: '', stress: '', feelNote: '', emotionTags: '' },
     vices: { mast: '', porn: '', coffee: '', vaping: '', vapAmt: '', alcohol: '', alcDrinks: '', screenT: '', doomScroll: '' },
@@ -64,7 +64,7 @@ export default function Dashboard() {
         } else {
           // Reset if none found
           setEntry({
-            body: { steps: '', weight: '', sleepH: '', water: '', sleepQ: '', exercise: '', exerciseMin: '', skAM: '', skPM: '', ateQ: '', meals: '', hubermanSunlight: '', zone2Cardio: '' },
+            body: { sleepH: '', sleepBedtime: '', sleepWakeTime: '', sleepQ: 7, wakeWithoutAlarm: 'no', workoutType: 'rest', muscleGroup: 'none', exerciseMin: '', zone2Cardio: '', prHit: 'no', steps: '', meals: '', proteinGrams: '', ifFasting: 'no', firstMealTime: '', ateJunk: 'no', water: '', hubermanSunlight: 'no', coldShower: 'no', restingHR: '', hrv: '', weight: '', creatine: 'no', supplements: '' },
             mind: { meditation: '', meditMin: '', journaling: '', reading: '', readMin: '', learning: '', learnNote: '', gogginsHardThing: '' },
             mood: { mood: '', energy: '', focus: '', anxiety: '', stress: '', feelNote: '', emotionTags: '' },
             vices: { mast: '', porn: '', coffee: '', vaping: '', vapAmt: '', alcohol: '', alcDrinks: '', screenT: '', doomScroll: '' },
@@ -213,47 +213,136 @@ export default function Dashboard() {
             
             {/* BODY AREA */}
             {activeArea === 'body' && (
-              <div className="form-grid">
-                <div className="notion-form-group">
-                  <label className="notion-label">Steps</label>
-                  <input type="number" className="notion-input" value={entry.body.steps} onChange={e => updateField('body', 'steps', e.target.value)} placeholder="0" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* SLEEP */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>😴</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Sleep</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Hours Slept</label>
+                      <input type="number" className="notion-input" value={entry.body.sleepH} onChange={e => updateField('body', 'sleepH', e.target.value)} placeholder="7.5" step="0.5" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Morning Sunlight</label>
+                      <select className="notion-input" value={entry.body.hubermanSunlight} onChange={e => updateField('body', 'hubermanSunlight', e.target.value)}>
+                        <option value="no">❌ Missed</option>
+                        <option value="yes">✅ Done (&lt;30m of wake)</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1', background: 'var(--notion-input-bg)', padding: '16px', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <label className="notion-label" style={{ marginBottom: 0 }}>Sleep Quality</label>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#185FA5' }}>{entry.body.sleepQ || 7}/10</span>
+                      </div>
+                      <input type="range" min="1" max="10" className="apple-slider" value={entry.body.sleepQ || 7} onChange={e => updateField('body', 'sleepQ', e.target.value)} />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Weight (kg/lbs)</label>
-                  <input type="number" className="notion-input" value={entry.body.weight} onChange={e => updateField('body', 'weight', e.target.value)} placeholder="0.0" />
+
+                {/* TRAINING */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🏋️</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Training</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Workout Type</label>
+                      <select className="notion-input" value={entry.body.workoutType} onChange={e => updateField('body', 'workoutType', e.target.value)}>
+                        <option value="rest">😴 Rest Day</option>
+                        <option value="strength">💪 Strength</option>
+                        <option value="hiit">⚡ HIIT</option>
+                        <option value="cardio">🏃 Cardio</option>
+                        <option value="yoga">🧘 Yoga / Mobility</option>
+                        <option value="sport">⚽ Sport</option>
+                        <option value="walk">🚶 Walk / Light</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Muscle Group</label>
+                      <select className="notion-input" value={entry.body.muscleGroup} onChange={e => updateField('body', 'muscleGroup', e.target.value)}>
+                        <option value="none">— Rest / N/A</option>
+                        <option value="push">Push (Chest / Shoulders / Tri)</option>
+                        <option value="pull">Pull (Back / Biceps)</option>
+                        <option value="legs">Legs</option>
+                        <option value="full">Full Body</option>
+                        <option value="core">Core</option>
+                        <option value="upper">Upper Body</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Duration (mins)</label>
+                      <input type="number" className="notion-input" value={entry.body.exerciseMin} onChange={e => updateField('body', 'exerciseMin', e.target.value)} placeholder="60" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Zone 2 Cardio (mins)</label>
+                      <input type="number" className="notion-input" value={entry.body.zone2Cardio} onChange={e => updateField('body', 'zone2Cardio', e.target.value)} placeholder="0" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Steps</label>
+                      <input type="number" className="notion-input" value={entry.body.steps} onChange={e => updateField('body', 'steps', e.target.value)} placeholder="8000" />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Morning Sunlight (Huberman)</label>
-                  <select className="notion-input" value={entry.body.hubermanSunlight} onChange={e => updateField('body', 'hubermanSunlight', e.target.value)}>
-                    <option value="no">Missed</option>
-                    <option value="yes">Done (&lt;30m wake)</option>
-                  </select>
+
+                {/* NUTRITION */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🥗</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Nutrition</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Protein (grams)</label>
+                      <input type="number" className="notion-input" value={entry.body.proteinGrams} onChange={e => updateField('body', 'proteinGrams', e.target.value)} placeholder="150" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Water (Litres)</label>
+                      <input type="number" className="notion-input" value={entry.body.water} onChange={e => updateField('body', 'water', e.target.value)} placeholder="2.5" step="0.5" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Ate Junk Food?</label>
+                      <select className="notion-input" value={entry.body.ateJunk} onChange={e => updateField('body', 'ateJunk', e.target.value)}>
+                        <option value="no">✅ Clean</option>
+                        <option value="little">⚠️ A little</option>
+                        <option value="yes">❌ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Meals Eaten</label>
+                      <select className="notion-input" value={entry.body.meals} onChange={e => updateField('body', 'meals', e.target.value)}>
+                        <option value="">—</option>
+                        {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Zone 2 Cardio (Peter Attia)</label>
-                  <input type="number" className="notion-input" value={entry.body.zone2Cardio} onChange={e => updateField('body', 'zone2Cardio', e.target.value)} placeholder="0 mins" />
+
+                {/* RECOVERY */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🧬</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Recovery</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Cold Shower?</label>
+                      <select className="notion-input" value={entry.body.coldShower} onChange={e => updateField('body', 'coldShower', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Supplements</label>
+                      <input type="text" className="notion-input" value={entry.body.supplements} onChange={e => updateField('body', 'supplements', e.target.value)} placeholder="Vit D, Omega-3, Magnesium..." />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Sleep Hours</label>
-                  <input type="number" className="notion-input" value={entry.body.sleepH} onChange={e => updateField('body', 'sleepH', e.target.value)} placeholder="0.0" />
-                </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Water Litres</label>
-                  <input type="number" className="notion-input" value={entry.body.water} onChange={e => updateField('body', 'water', e.target.value)} placeholder="0.0" />
-                </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Exercise Type</label>
-                  <select className="notion-input" value={entry.body.exercise} onChange={e => updateField('body', 'exercise', e.target.value)}>
-                    <option value="">None</option>
-                    <option value="light">Light</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="intense">Intense</option>
-                  </select>
-                </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Exercise (mins)</label>
-                  <input type="number" className="notion-input" value={entry.body.exerciseMin} onChange={e => updateField('body', 'exerciseMin', e.target.value)} placeholder="0" />
-                </div>
+
               </div>
             )}
 
