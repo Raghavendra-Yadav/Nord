@@ -681,24 +681,99 @@ export default function Dashboard() {
 
             {/* FINANCE AREA */}
             {activeArea === 'finance' && (
-              <div className="form-grid">
-                <div className="notion-form-group">
-                  <label className="notion-label">Amount Spent Today ($)</label>
-                  <input type="number" className="notion-input" value={entry.finance.spent} onChange={e => updateField('finance', 'spent', e.target.value)} placeholder="0.00" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* DAILY SPENDING */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>💸</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Daily Spending</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Amount Spent ($)</label>
+                      <input type="number" className="notion-input" value={entry.finance.spent} onChange={e => updateField('finance', 'spent', e.target.value)} placeholder="0.00" step="0.01" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Biggest Spending Area</label>
+                      <select className="notion-input" value={entry.finance.spentCat} onChange={e => updateField('finance', 'spentCat', e.target.value)}>
+                        <option value="">— None</option>
+                        <option value="food">🍔 Food & Dining</option>
+                        <option value="groceries">🛒 Groceries</option>
+                        <option value="transport">🚗 Transport / Gas</option>
+                        <option value="subscriptions">📺 Subscriptions</option>
+                        <option value="shopping">🛍️ Shopping</option>
+                        <option value="health">💊 Health</option>
+                        <option value="entertainment">🎮 Entertainment</option>
+                        <option value="bills">🏠 Bills / Utilities</option>
+                        <option value="other">📦 Other</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Impulse Purchase?</label>
+                      <select className="notion-input" value={entry.finance.impulse} onChange={e => updateField('finance', 'impulse', e.target.value)}>
+                        <option value="no">✅ No — Intentional</option>
+                        <option value="yes">❌ Yes — Impulse</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">What did you buy?</label>
+                      <input type="text" className="notion-input" value={entry.finance.finNote} onChange={e => updateField('finance', 'finNote', e.target.value)} placeholder="Coffee, lunch, gas, Amazon..." />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Impulse Purchase?</label>
-                  <select className="notion-input" value={entry.finance.impulse} onChange={e => updateField('finance', 'impulse', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
+
+                {/* WEALTH BUILDING */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>📈</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Wealth Building</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Invested Today?</label>
+                      <select className="notion-input" value={entry.finance.invested} onChange={e => updateField('finance', 'invested', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Amount Invested ($)</label>
+                      <input type="number" className="notion-input" value={entry.finance.investAmt} onChange={e => updateField('finance', 'investAmt', e.target.value)} placeholder="0.00" step="0.01" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Income Received ($)</label>
+                      <input type="number" className="notion-input" value={entry.finance.income} onChange={e => updateField('finance', 'income', e.target.value)} placeholder="0.00" step="0.01" />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">What did you buy? (Notes)</label>
-                  <textarea className="notion-input" style={{ height: '60px', padding: '12px' }} value={entry.finance.finNote} onChange={e => updateField('finance', 'finNote', e.target.value)} placeholder="Groceries, gas, coffee..." />
+
+                {/* FINANCIAL DISCIPLINE */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🏦</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Financial Discipline</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Stayed in Budget?</label>
+                      <select className="notion-input" value={entry.finance.budget} onChange={e => updateField('finance', 'budget', e.target.value)}>
+                        <option value="">— N/A</option>
+                        <option value="yes">✅ Yes</option>
+                        <option value="little_over">⚠️ Slightly Over</option>
+                        <option value="no">❌ Overspent</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Saved Today ($)</label>
+                      <input type="number" className="notion-input" value={entry.finance.saved} onChange={e => updateField('finance', 'saved', e.target.value)} placeholder="0.00" step="0.01" />
+                    </div>
+                  </div>
                 </div>
+
               </div>
             )}
+
 
             {/* RELATIONS AREA */}
             {activeArea === 'relations' && (
