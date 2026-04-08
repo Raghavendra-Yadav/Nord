@@ -69,7 +69,7 @@ export default function MonthTab() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '8px' }}>
           {calendarDays.map((calDay, i) => {
             if (!calDay) return <div key={`empty-${i}`} style={{ height: '80px' }} />;
             
@@ -90,7 +90,8 @@ export default function MonthTab() {
                   background: isSelected ? 'rgba(24, 95, 165, 0.05)' : hasData ? 'var(--notion-input-bg)' : '#fafafa',
                   cursor: 'pointer',
                   transition: 'all 0.1s',
-                  position: 'relative'
+                  position: 'relative',
+                  overflow: 'hidden' // Force contain content
                 }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -104,7 +105,18 @@ export default function MonthTab() {
                   </div>
                 )}
                 {entry?.reflect?.wins && (
-                  <div style={{ fontSize: '10px', color: 'var(--notion-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '6px' }}>
+                  <div 
+                    title={entry.reflect.wins}
+                    style={{ 
+                      fontSize: '10px', 
+                      color: 'var(--notion-text)', 
+                      whiteSpace: 'nowrap', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      marginTop: '6px',
+                      maxWidth: '100%' 
+                    }}
+                  >
                     🏆 {entry.reflect.wins}
                   </div>
                 )}
