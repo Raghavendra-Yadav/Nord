@@ -30,7 +30,7 @@ export default function Dashboard() {
   // Entire state mapped to MongoDB Schema explicitly 
   const [entry, setEntry] = useState({
     body: { sleepH: '', sleepBedtime: '', sleepWakeTime: '', sleepQ: 7, wakeWithoutAlarm: 'no', workoutType: 'rest', muscleGroup: 'none', exerciseMin: '', zone2Cardio: '', prHit: 'no', steps: '', meals: '', proteinGrams: '', ifFasting: 'no', firstMealTime: '', ateJunk: 'no', water: '', hubermanSunlight: 'no', coldShower: 'no', restingHR: '', hrv: '', weight: '', creatine: 'no', supplements: '' },
-    mind: { meditation: '', meditMin: '', journaling: '', reading: '', readMin: '', learning: '', learnNote: '', gogginsHardThing: '' },
+    mind: { meditMin: '', journalMin: '', noPhoneFirstHour: 'no', readMin: '', podcastDone: 'no', learnNote: '', gogginsHardThing: '' },
     mood: { mood: '', energy: '', focus: '', anxiety: '', stress: '', feelNote: '', emotionTags: '' },
     vices: { mast: '', porn: '', coffee: '', vaping: '', vapAmt: '', alcohol: '', alcDrinks: '', screenT: '', doomScroll: '' },
     career: { carHours: '', appsOut: '', skillPractice: '', projectWork: '', leetcode: '', networkingDone: '', carNote: '', deepWorkBlocks: '' },
@@ -65,7 +65,7 @@ export default function Dashboard() {
           // Reset if none found
           setEntry({
             body: { sleepH: '', sleepBedtime: '', sleepWakeTime: '', sleepQ: 7, wakeWithoutAlarm: 'no', workoutType: 'rest', muscleGroup: 'none', exerciseMin: '', zone2Cardio: '', prHit: 'no', steps: '', meals: '', proteinGrams: '', ifFasting: 'no', firstMealTime: '', ateJunk: 'no', water: '', hubermanSunlight: 'no', coldShower: 'no', restingHR: '', hrv: '', weight: '', creatine: 'no', supplements: '' },
-            mind: { meditation: '', meditMin: '', journaling: '', reading: '', readMin: '', learning: '', learnNote: '', gogginsHardThing: '' },
+            mind: { meditMin: '', journalMin: '', noPhoneFirstHour: 'no', readMin: '', podcastDone: 'no', learnNote: '', gogginsHardThing: '' },
             mood: { mood: '', energy: '', focus: '', anxiety: '', stress: '', feelNote: '', emotionTags: '' },
             vices: { mast: '', porn: '', coffee: '', vaping: '', vapAmt: '', alcohol: '', alcDrinks: '', screenT: '', doomScroll: '' },
             career: { carHours: '', appsOut: '', skillPractice: '', projectWork: '', leetcode: '', networkingDone: '', carNote: '', deepWorkBlocks: '' },
@@ -348,32 +348,75 @@ export default function Dashboard() {
 
             {/* MIND AREA */}
             {activeArea === 'mind' && (
-              <div className="form-grid">
-                <div className="notion-form-group">
-                  <label className="notion-label">Meditation</label>
-                  <select className="notion-input" value={entry.mind.meditation} onChange={e => updateField('mind', 'meditation', e.target.value)}>
-                    <option value="not done">Not Done</option>
-                    <option value="done">Done</option>
-                  </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* MINDFULNESS */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🧘</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Mindfulness</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Meditation (mins)</label>
+                      <input type="number" className="notion-input" value={entry.mind.meditMin} onChange={e => updateField('mind', 'meditMin', e.target.value)} placeholder="0" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Journaling (mins)</label>
+                      <input type="number" className="notion-input" value={entry.mind.journalMin} onChange={e => updateField('mind', 'journalMin', e.target.value)} placeholder="0" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">No Phone First Hour?</label>
+                      <select className="notion-input" value={entry.mind.noPhoneFirstHour} onChange={e => updateField('mind', 'noPhoneFirstHour', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Meditation (mins)</label>
-                  <input type="number" className="notion-input" value={entry.mind.meditMin} onChange={e => updateField('mind', 'meditMin', e.target.value)} placeholder="0" />
+
+                {/* LEARNING */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>📚</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Learning</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Reading (mins)</label>
+                      <input type="number" className="notion-input" value={entry.mind.readMin} onChange={e => updateField('mind', 'readMin', e.target.value)} placeholder="0" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Podcast / Audiobook?</label>
+                      <select className="notion-input" value={entry.mind.podcastDone} onChange={e => updateField('mind', 'podcastDone', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">Key Thing Learned Today</label>
+                      <input type="text" className="notion-input" value={entry.mind.learnNote} onChange={e => updateField('mind', 'learnNote', e.target.value)} placeholder="One sentence. What did you actually learn?" />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Read Mins (Naval)</label>
-                  <input type="number" className="notion-input" value={entry.mind.readMin} onChange={e => updateField('mind', 'readMin', e.target.value)} placeholder="0" />
+
+                {/* MENTAL REPS */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🔥</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Mental Reps</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">The Hard Thing (Goggins)</label>
+                      <input type="text" className="notion-input" value={entry.mind.gogginsHardThing} onChange={e => updateField('mind', 'gogginsHardThing', e.target.value)} placeholder="What sucked today that you did anyway?" />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">The Hard Thing (Goggins)</label>
-                  <input type="text" className="notion-input" value={entry.mind.gogginsHardThing} onChange={e => updateField('mind', 'gogginsHardThing', e.target.value)} placeholder="What sucks that you did anyway?" />
-                </div>
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">Learning Notes</label>
-                  <textarea className="notion-input" style={{ height: '60px', padding: '12px' }} value={entry.mind.learnNote} onChange={e => updateField('mind', 'learnNote', e.target.value)} placeholder="What did you learn today?" />
-                </div>
+
               </div>
             )}
+
 
             {/* MOOD AREA */}
             {activeArea === 'mood' && (

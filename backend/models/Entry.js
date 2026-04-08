@@ -40,8 +40,12 @@ const entrySchema = new mongoose.Schema({
     supplements: String,        // free text
   },
   mind: {
-    meditation: String, meditMin: Number, journaling: String,
-    reading: String, readMin: Number, learning: String, learnNote: String,
+    meditMin: Number,
+    journalMin: Number,
+    noPhoneFirstHour: String,   // yes/no
+    readMin: Number,
+    podcastDone: String,        // yes/no
+    learnNote: String,
     gogginsHardThing: String
   },
   mood: {
