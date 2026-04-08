@@ -57,10 +57,10 @@ const entrySchema = new mongoose.Schema({
     vapAmt: Number, alcohol: String, alcDrinks: Number,
     screenT: Number, doomScroll: String
   },
-  career: {
+    career: {
     carHours: Number, appsOut: Number, skillPractice: String,
-    projectWork: String, leetcode: String, networkingDone: String, carNote: String,
-    deepWorkBlocks: Number
+    projectWork: String, leetcode: String, networkingDone: String,
+    carNote: String, deepWorkBlocks: Number, flowState: String
   },
   finance: {
     budget: Number, spent: Number, spentCat: String, saved: Number,

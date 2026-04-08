@@ -33,7 +33,7 @@ export default function Dashboard() {
     mind: { meditMin: '', journalMin: '', noPhoneFirstHour: 'no', readMin: '', podcastDone: 'no', learnNote: '', gogginsHardThing: '' },
     mood: { mood: '', energy: '', focus: '', anxiety: '', stress: '', feelNote: '', emotionTags: '' },
     vices: { mast: '', porn: '', coffee: '', vaping: '', vapAmt: '', alcohol: '', alcDrinks: '', screenT: '', doomScroll: '' },
-    career: { carHours: '', appsOut: '', skillPractice: '', projectWork: '', leetcode: '', networkingDone: '', carNote: '', deepWorkBlocks: '' },
+    career: { carHours: '', appsOut: '', skillPractice: 'no', projectWork: 'no', leetcode: 'no', networkingDone: 'no', carNote: '', deepWorkBlocks: '0', flowState: 'no' },
     finance: { budget: '', spent: '', spentCat: '', saved: '', income: '', invested: '', investAmt: '', impulse: '', finNote: '' },
     relations: { social: '', meaningConvo: '', calledFamily: '', helpedSomeone: '', connectedWith: '', conflict: '', lonely: '' },
     environ: { roomClean: '', bedMade: '', mornRoutine: '', nightRoutine: '', outdoorTime: '', sunlight: '', phoneFree: '', creative: '' },
@@ -68,7 +68,7 @@ export default function Dashboard() {
             mind: { meditMin: '', journalMin: '', noPhoneFirstHour: 'no', readMin: '', podcastDone: 'no', learnNote: '', gogginsHardThing: '' },
             mood: { mood: '', energy: '', focus: '', anxiety: '', stress: '', feelNote: '', emotionTags: '' },
             vices: { mast: '', porn: '', coffee: '', vaping: '', vapAmt: '', alcohol: '', alcDrinks: '', screenT: '', doomScroll: '' },
-            career: { carHours: '', appsOut: '', skillPractice: '', projectWork: '', leetcode: '', networkingDone: '', carNote: '', deepWorkBlocks: '' },
+            career: { carHours: '', appsOut: '', skillPractice: 'no', projectWork: 'no', leetcode: 'no', networkingDone: 'no', carNote: '', deepWorkBlocks: '0', flowState: 'no' },
             finance: { budget: '', spent: '', spentCat: '', saved: '', income: '', invested: '', investAmt: '', impulse: '', finNote: '' },
             relations: { social: '', meaningConvo: '', calledFamily: '', helpedSomeone: '', connectedWith: '', conflict: '', lonely: '' },
             environ: { roomClean: '', bedMade: '', mornRoutine: '', nightRoutine: '', outdoorTime: '', sunlight: '', phoneFree: '', creative: '' },
@@ -586,39 +586,98 @@ export default function Dashboard() {
 
             {/* CAREER AREA */}
             {activeArea === 'career' && (
-              <div className="form-grid">
-                <div className="notion-form-group">
-                  <label className="notion-label">Career Hours worked</label>
-                  <input type="number" className="notion-input" value={entry.career.carHours} onChange={e => updateField('career', 'carHours', e.target.value)} placeholder="0" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* FOCUS & DEEP WORK */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>⏱️</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Focus & Deep Work</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Hours Worked</label>
+                      <input type="number" className="notion-input" value={entry.career.carHours} onChange={e => updateField('career', 'carHours', e.target.value)} placeholder="0" step="0.5" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Deep Work Blocks (Cal Newport)</label>
+                      <select className="notion-input" value={entry.career.deepWorkBlocks} onChange={e => updateField('career', 'deepWorkBlocks', e.target.value)}>
+                        <option value="0">0 — Scattered</option>
+                        <option value="1">1 block (~90 mins)</option>
+                        <option value="2">2 blocks</option>
+                        <option value="3">3 blocks 🔥</option>
+                        <option value="4">4+ blocks 💀</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Hit Flow State?</label>
+                      <select className="notion-input" value={entry.career.flowState} onChange={e => updateField('career', 'flowState', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Job Apps Out</label>
-                  <input type="number" className="notion-input" value={entry.career.appsOut} onChange={e => updateField('career', 'appsOut', e.target.value)} placeholder="0" />
+
+                {/* OUTPUT & SKILLS */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🚀</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Output & Skills</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Job Applications Sent</label>
+                      <input type="number" className="notion-input" value={entry.career.appsOut} onChange={e => updateField('career', 'appsOut', e.target.value)} placeholder="0" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Leetcode / Dev Practice?</label>
+                      <select className="notion-input" value={entry.career.leetcode} onChange={e => updateField('career', 'leetcode', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Skill / Course Practice?</label>
+                      <select className="notion-input" value={entry.career.skillPractice} onChange={e => updateField('career', 'skillPractice', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Side Project Work?</label>
+                      <select className="notion-input" value={entry.career.projectWork} onChange={e => updateField('career', 'projectWork', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">Career Win of the Day</label>
+                      <input type="text" className="notion-input" value={entry.career.carNote} onChange={e => updateField('career', 'carNote', e.target.value)} placeholder="What did you actually ship or move forward today?" />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Skill Practice</label>
-                  <select className="notion-input" value={entry.career.skillPractice} onChange={e => updateField('career', 'skillPractice', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
+
+                {/* NETWORKING */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🤝</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Networking</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Networked Today?</label>
+                      <select className="notion-input" value={entry.career.networkingDone} onChange={e => updateField('career', 'networkingDone', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Leetcode / Dev</label>
-                  <select className="notion-input" value={entry.career.leetcode} onChange={e => updateField('career', 'leetcode', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
-                </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Deep Work (Cal Newport)</label>
-                  <input type="number" className="notion-input" value={entry.career.deepWorkBlocks} onChange={e => updateField('career', 'deepWorkBlocks', e.target.value)} placeholder="Number of 90m blocks" />
-                </div>
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">Career Notes</label>
-                  <textarea className="notion-input" style={{ height: '60px', padding: '12px' }} value={entry.career.carNote} onChange={e => updateField('career', 'carNote', e.target.value)} placeholder="Work reflection..." />
-                </div>
+
               </div>
             )}
+
 
             {/* FINANCE AREA */}
             {activeArea === 'finance' && (
