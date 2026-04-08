@@ -37,7 +37,7 @@ export default function Dashboard() {
     finance: { budget: '', spent: '', spentCat: '', saved: '', income: '', invested: '', investAmt: '', impulse: '', finNote: '' },
     relations: { social: '', meaningConvo: '', calledFamily: '', helpedSomeone: '', connectedWith: '', conflict: '', lonely: '' },
     environ: { roomClean: '', bedMade: '', mornRoutine: '', nightRoutine: '', outdoorTime: '', sunlight: '', phoneFree: '', creative: '' },
-    reflect: { wins: '', struggles: '', gratitude: '', intention: '', dayRating: '', notes: '', onePercentBetter: '' }
+    reflect: { wins: '', struggles: '', gratitude: '', intention: '', dayRating: 7, notes: '', onePercentBetter: '' }
   });
 
   const [loading, setLoading] = useState(false);
@@ -72,7 +72,7 @@ export default function Dashboard() {
             finance: { budget: '', spent: '', spentCat: '', saved: '', income: '', invested: '', investAmt: '', impulse: '', finNote: '' },
             relations: { social: '', meaningConvo: '', calledFamily: '', helpedSomeone: '', connectedWith: '', conflict: '', lonely: '' },
             environ: { roomClean: '', bedMade: '', mornRoutine: '', nightRoutine: '', outdoorTime: '', sunlight: '', phoneFree: '', creative: '' },
-            reflect: { wins: '', struggles: '', gratitude: '', intention: '', dayRating: '', notes: '', onePercentBetter: '' }
+            reflect: { wins: '', struggles: '', gratitude: '', intention: '', dayRating: 7, notes: '', onePercentBetter: '' }
           });
         }
       } catch (err) {
@@ -777,96 +777,211 @@ export default function Dashboard() {
 
             {/* RELATIONS AREA */}
             {activeArea === 'relations' && (
-              <div className="form-grid">
-                <div className="notion-form-group">
-                  <label className="notion-label">Social Energy</label>
-                  <select className="notion-input" value={entry.relations.social} onChange={e => updateField('relations', 'social', e.target.value)}>
-                    <option value="none">None</option>
-                    <option value="low">Low</option>
-                    <option value="high">High</option>
-                  </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* CONNECTION */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>❤️</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Connection</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Had a Meaningful Convo?</label>
+                      <select className="notion-input" value={entry.relations.meaningConvo} onChange={e => updateField('relations', 'meaningConvo', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Called / Texted Family?</label>
+                      <select className="notion-input" value={entry.relations.calledFamily} onChange={e => updateField('relations', 'calledFamily', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Helped Someone Today?</label>
+                      <select className="notion-input" value={entry.relations.helpedSomeone} onChange={e => updateField('relations', 'helpedSomeone', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Conflict With Anyone?</label>
+                      <select className="notion-input" value={entry.relations.conflict} onChange={e => updateField('relations', 'conflict', e.target.value)}>
+                        <option value="no">✅ No</option>
+                        <option value="yes">⚠️ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">Who did you connect with today?</label>
+                      <input type="text" className="notion-input" value={entry.relations.connectedWith} onChange={e => updateField('relations', 'connectedWith', e.target.value)} placeholder="Friend, partner, colleague, family..." />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Meaningful Convo</label>
-                  <select className="notion-input" value={entry.relations.meaningConvo} onChange={e => updateField('relations', 'meaningConvo', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
+
+                {/* SOCIAL BATTERY */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🔋</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Social Battery</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1', background: 'var(--notion-input-bg)', padding: '16px', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <label className="notion-label" style={{ marginBottom: 0 }}>Social Energy Level</label>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#185FA5' }}>{entry.relations.lonely || 5}/10</span>
+                      </div>
+                      <input type="range" min="1" max="10" className="apple-slider" value={entry.relations.lonely || 5} onChange={e => updateField('relations', 'lonely', e.target.value)} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#aaa', marginTop: '4px' }}>
+                        <span>Drained / Isolated</span><span>Fully Charged</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Helped Someone</label>
-                  <select className="notion-input" value={entry.relations.helpedSomeone} onChange={e => updateField('relations', 'helpedSomeone', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
-                </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Connected With</label>
-                  <input type="text" className="notion-input" value={entry.relations.connectedWith} onChange={e => updateField('relations', 'connectedWith', e.target.value)} placeholder="Name..." />
-                </div>
+
               </div>
             )}
+
 
             {/* ENVIRON AREA */}
             {activeArea === 'environ' && (
-              <div className="form-grid">
-                <div className="notion-form-group">
-                  <label className="notion-label">Room Clean</label>
-                  <select className="notion-input" value={entry.environ.roomClean} onChange={e => updateField('environ', 'roomClean', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* SPACE */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🏠</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Space</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Bed Made?</label>
+                      <select className="notion-input" value={entry.environ.bedMade} onChange={e => updateField('environ', 'bedMade', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Room / Space Clean?</label>
+                      <select className="notion-input" value={entry.environ.roomClean} onChange={e => updateField('environ', 'roomClean', e.target.value)}>
+                        <option value="no">❌ No — Chaos</option>
+                        <option value="partial">⚠️ Partially</option>
+                        <option value="yes">✅ Clean</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Morning Routine Done?</label>
+                      <select className="notion-input" value={entry.environ.mornRoutine} onChange={e => updateField('environ', 'mornRoutine', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="partial">⚠️ Partial</option>
+                        <option value="yes">✅ Full routine</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Night Routine Done?</label>
+                      <select className="notion-input" value={entry.environ.nightRoutine} onChange={e => updateField('environ', 'nightRoutine', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="partial">⚠️ Partial</option>
+                        <option value="yes">✅ Full routine</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Bed Made</label>
-                  <select className="notion-input" value={entry.environ.bedMade} onChange={e => updateField('environ', 'bedMade', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
+
+                {/* OUTSIDE & MIND */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🌿</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Outside & Mind</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Outdoor Time (mins)</label>
+                      <input type="number" className="notion-input" value={entry.environ.outdoorTime} onChange={e => updateField('environ', 'outdoorTime', e.target.value)} placeholder="0" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Did Something Creative?</label>
+                      <select className="notion-input" value={entry.environ.creative} onChange={e => updateField('environ', 'creative', e.target.value)}>
+                        <option value="no">❌ No</option>
+                        <option value="yes">✅ Yes</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Sunlight exposure</label>
-                  <select className="notion-input" value={entry.environ.sunlight} onChange={e => updateField('environ', 'sunlight', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
-                </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Outdoor Time</label>
-                  <select className="notion-input" value={entry.environ.outdoorTime} onChange={e => updateField('environ', 'outdoorTime', e.target.value)}>
-                    <option value="none">None</option>
-                    <option value="some">Some</option>
-                    <option value="a lot">A Lot!</option>
-                  </select>
-                </div>
+
               </div>
             )}
 
+
             {/* REFLECT AREA */}
             {activeArea === 'reflect' && (
-              <div className="form-grid">
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">Daily Wins</label>
-                  <textarea className="notion-input" style={{ height: '60px', padding: '12px' }} value={entry.reflect.wins} onChange={e => updateField('reflect', 'wins', e.target.value)} placeholder="What went well today?" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* TODAY'S DEBRIEF */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🏆</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Today's Debrief</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">Biggest win today</label>
+                      <input type="text" className="notion-input" value={entry.reflect.wins} onChange={e => updateField('reflect', 'wins', e.target.value)} placeholder="One thing that actually went well..." />
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">Biggest struggle / what didn't go well</label>
+                      <input type="text" className="notion-input" value={entry.reflect.struggles} onChange={e => updateField('reflect', 'struggles', e.target.value)} placeholder="Be honest. What held you back?" />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">Struggles</label>
-                  <textarea className="notion-input" style={{ height: '60px', padding: '12px' }} value={entry.reflect.struggles} onChange={e => updateField('reflect', 'struggles', e.target.value)} placeholder="What was hard?" />
+
+                {/* GRATITUDE */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🙏</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Gratitude</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">One thing I'm genuinely grateful for</label>
+                      <input type="text" className="notion-input" value={entry.reflect.gratitude} onChange={e => updateField('reflect', 'gratitude', e.target.value)} placeholder="Specific > generic. Not just 'my health'..." />
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1', background: 'var(--notion-input-bg)', padding: '16px', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <label className="notion-label" style={{ marginBottom: 0 }}>Overall Day Rating</label>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#185FA5' }}>{entry.reflect.dayRating || 7}/10</span>
+                      </div>
+                      <input type="range" min="1" max="10" className="apple-slider" value={entry.reflect.dayRating || 7} onChange={e => updateField('reflect', 'dayRating', e.target.value)} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#aaa', marginTop: '4px' }}>
+                        <span>Rough day</span><span>Perfect day</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">Gratitude</label>
-                  <textarea className="notion-input" style={{ height: '60px', padding: '12px' }} value={entry.reflect.gratitude} onChange={e => updateField('reflect', 'gratitude', e.target.value)} placeholder="I am grateful for..." />
+
+                {/* TOMORROW'S INTENT */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🎯</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Tomorrow's Intent</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">The ONE Thing (Gary Keller)</label>
+                      <input type="text" className="notion-input" value={entry.reflect.intention} onChange={e => updateField('reflect', 'intention', e.target.value)} placeholder="If tomorrow had one job, what is it?" />
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
+                      <label className="notion-label">1% Better Tomorrow (James Clear)</label>
+                      <input type="text" className="notion-input" value={entry.reflect.onePercentBetter} onChange={e => updateField('reflect', 'onePercentBetter', e.target.value)} placeholder="One tiny system tweak. Small changes, compounding results." />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">1% Better (James Clear)</label>
-                  <textarea className="notion-input" style={{ height: '60px', padding: '12px' }} value={entry.reflect.onePercentBetter} onChange={e => updateField('reflect', 'onePercentBetter', e.target.value)} placeholder="How did you improve the system 1% today?" />
-                </div>
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">The ONE Thing (Gary Keller)</label>
-                  <input type="text" className="notion-input" value={entry.reflect.intention} onChange={e => updateField('reflect', 'intention', e.target.value)} placeholder="What is the single most important thing tomorrow?" />
-                </div>
+
               </div>
             )}
+
 
           </div>
           )

@@ -77,8 +77,7 @@ const entrySchema = new mongoose.Schema({
   },
   reflect: {
     wins: String, struggles: String, gratitude: String,
-    intention: String, dayRating: Number, notes: String,
-    onePercentBetter: String
+    dayRating: Number, onePercentBetter: String, intention: String, notes: String
   }
 }, { timestamps: true });
 
