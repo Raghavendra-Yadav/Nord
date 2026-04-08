@@ -54,64 +54,59 @@ export default function RightSidebar() {
     totalInvested += Number(e.finance?.investAmt) || 0;
   });
 
-  // Gamification Metrics
+  // System Metrics
   const level = user.level || 1;
   const xp = user.xp || 0;
-  const nextLevelXp = level * 100 * 1.5;
-  const xpProgress = Math.min((xp / nextLevelXp) * 100, 100);
 
   return (
     <aside className="notion-right-sidebar" style={{ animation: 'smoothDropIn 0.5s ease forwards' }}>
       
-      {/* Player Card Gamification */}
-      <div style={{ marginBottom: '24px', background: 'linear-gradient(145deg, #0f172a, #1e293b)', padding: '16px', borderRadius: '12px', color: '#fff', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.4)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <div>
-            <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.7, fontWeight: 600 }}>Ascension Level</div>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: '#38bdf8' }}>{level}</div>
-          </div>
-          <div style={{ width: '40px', height: '40px', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-            🦅
-          </div>
-        </div>
-        
-        {/* XP Bar */}
-        <div style={{ background: 'rgba(255,255,255,0.1)', height: '6px', borderRadius: '10px', overflow: 'hidden', marginBottom: '8px' }}>
-          <div style={{ background: '#38bdf8', height: '100%', width: `${xpProgress}%`, transition: 'width 0.5s ease' }}></div>
-        </div>
-        <div style={{ fontSize: '11px', display: 'flex', justifyContent: 'space-between', opacity: 0.7 }}>
-          <span>{xp} XP</span>
-          <span>{nextLevelXp} XP</span>
-        </div>
-      </div>
-
-      <h3 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>
-        Live Streaks
+      {/* Premium Telemetry Overview */}
+      <h3 style={{ fontSize: '11px', fontWeight: 600, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
+        Telemetry Confidence
       </h3>
       
-      <div className="stats-card">
+      <div style={{ marginBottom: '24px', background: 'var(--notion-input-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--notion-border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+          <div>
+            <div style={{ fontSize: '20px', fontWeight: 600, color: 'var(--notion-text)', letterSpacing: '-0.5px' }}>{history.length} / 30</div>
+            <div style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginTop: '2px' }}>Trailing 30 Days Captured</div>
+          </div>
+          <div style={{ width: '8px', height: '8px', background: history.length > 20 ? '#185FA5' : '#D9730D', borderRadius: '50%', marginTop: '6px' }} />
+        </div>
+        
+        <div style={{ background: 'var(--notion-border)', height: '4px', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ background: history.length > 20 ? '#185FA5' : '#D9730D', height: '100%', width: `${Math.min((history.length / 30) * 100, 100)}%`, transition: 'width 0.5s ease' }}></div>
+        </div>
+      </div>
+
+      <h3 style={{ fontSize: '11px', fontWeight: 600, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>
+        Habit Continuity
+      </h3>
+      
+      <div className="stats-card" style={{ border: 'none', background: 'transparent', padding: '0 0 12px 0', borderBottom: '1px solid var(--notion-border)', borderRadius: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>Deep Work</span>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: deepWorkStreak > 0 ? '#E03E3E' : 'var(--notion-gray-text)' }}>
-            🔥 {deepWorkStreak}
+          <span style={{ fontSize: '13px', color: 'var(--notion-text)' }}>Deep Work Protocol</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: deepWorkStreak > 0 ? '#185FA5' : 'var(--notion-gray-text)' }}>
+            {deepWorkStreak} Days
           </span>
         </div>
       </div>
 
-      <div className="stats-card">
+      <div className="stats-card" style={{ border: 'none', background: 'transparent', padding: '12px 0', borderBottom: '1px solid var(--notion-border)', borderRadius: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>Morning Sun</span>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: sunlightStreak > 0 ? '#E03E3E' : 'var(--notion-gray-text)' }}>
-            🔥 {sunlightStreak}
+          <span style={{ fontSize: '13px', color: 'var(--notion-text)' }}>Morning Sunlight</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: sunlightStreak > 0 ? '#185FA5' : 'var(--notion-gray-text)' }}>
+            {sunlightStreak} Days
           </span>
         </div>
       </div>
 
-      <div className="stats-card">
+      <div className="stats-card" style={{ border: 'none', background: 'transparent', padding: '12px 0 0 0', borderRadius: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '14px', fontWeight: 500 }}>Doing Hard Things</span>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: gogginsStreak > 0 ? '#E03E3E' : 'var(--notion-gray-text)' }}>
-            🔥 {gogginsStreak}
+          <span style={{ fontSize: '13px', color: 'var(--notion-text)' }}>High-Friction Tasks</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: gogginsStreak > 0 ? '#185FA5' : 'var(--notion-gray-text)' }}>
+            {gogginsStreak} Days
           </span>
         </div>
       </div>

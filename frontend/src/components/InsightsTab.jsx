@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, 
   LineChart, Line, XAxis, YAxis, Tooltip, Legend, 
-  BarChart, Bar, ScatterChart, Scatter, ZAxis, Cell
+  BarChart, Bar, ScatterChart, Scatter, Cell
 } from 'recharts';
 import api from '../api/axiosConfig';
 
 /**
- * 📈 Deep Analytics Dashboard
+ * 📈 Deep Analytics & Intelligence Dashboard
  * A massive visualization suite for LifeOS metrics.
  */
 export default function InsightsTab() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dismissedInsights, setDismissedInsights] = useState([]);
 
   // Fetch up to 90 days of data for rich analytics
   useEffect(() => {
@@ -29,21 +30,19 @@ export default function InsightsTab() {
   }, []);
 
   if (loading) {
-    return <div style={{ padding: '40px', color: 'var(--notion-gray-text)' }}>Generating Analytics Matrix...</div>;
+    return <div style={{ padding: '40px', color: 'var(--notion-gray-text)' }}>Generating Intelligence Matrix...</div>;
   }
 
   if (history.length === 0) {
-    return <div style={{ padding: '40px', color: 'var(--notion-gray-text)' }}>Not enough data for Deep Analytics. Keep logging!</div>;
+    return <div style={{ padding: '40px', color: 'var(--notion-gray-text)' }}>No data logged yet. Log today's entry to see your Deep Analytics.</div>;
   }
 
   // ==========================================
   // DATA SCORING ENGINE (0-100 normalization)
   // ==========================================
   
-  // Calculate a 0-100 score for a specific metric across an array of entries
   const calcScore = (entriesArr, domain) => {
     let sum = 0, count = 0;
-    
     entriesArr.forEach(entry => {
       let score = null;
       switch (domain) {
@@ -51,26 +50,25 @@ export default function InsightsTab() {
           if (entry.body?.sleepHr) score = Math.min((Number(entry.body.sleepHr) / 8) * 100, 100);
           break;
         case 'Mind':
-          if (entry.mind?.readMin) score = Math.min((Number(entry.mind.readMin) / 60) * 100, 100);
+          if (entry.mind?.readMin !== undefined) score = Math.min((Number(entry.mind.readMin || 0) / 30) * 100, 100);
           break;
         case 'Mood':
           if (entry.mood?.mood) score = (Number(entry.mood.mood) / 10) * 100;
           break;
         case 'Vices':
-          // Inverse: Low screen time = High Score (assuming 10hrs is 0 score)
-          if (entry.vices?.screenT) score = Math.max(100 - (Number(entry.vices.screenT) * 10), 0); 
+          if (entry.vices?.screenT !== undefined) score = Math.max(100 - (Number(entry.vices.screenT || 0) * 15), 0); 
           break;
         case 'Career':
-          if (entry.career?.deepWorkBlocks) score = Math.min((Number(entry.career.deepWorkBlocks) / 4) * 100, 100);
+          if (entry.career?.deepWorkBlocks !== undefined) score = Math.min((Number(entry.career.deepWorkBlocks || 0) / 3) * 100, 100);
           break;
         case 'Finance':
-          if (entry.finance?.spent) score = entry.finance.spent < 50 ? 100 : Math.max(100 - (Number(entry.finance.spent)/5), 0);
+          if (entry.finance?.spent !== undefined) score = entry.finance.spent < 20 ? 100 : Math.max(100 - (Number(entry.finance.spent)/3), 0);
           break;
         case 'Relations':
-          if (entry.relations?.meaningConvo === 'yes') score = 100; else score = 0;
+          if (entry.relations?.meaningConvo) score = entry.relations.meaningConvo === 'yes' ? 100 : 0;
           break;
         case 'Environment':
-          if (entry.environ?.roomClean === 'yes') score = 100; else if (entry.environ?.roomClean === 'partial') score = 50; else score = 0;
+          if (entry.environ?.roomClean) score = entry.environ.roomClean === 'yes' ? 100 : (entry.environ.roomClean === 'partial' ? 50 : 0);
           break;
         case 'Reflect':
           if (entry.reflect?.dayRating) score = (Number(entry.reflect.dayRating) / 10) * 100;
@@ -84,14 +82,113 @@ export default function InsightsTab() {
 
   const domains = ['Body', 'Mind', 'Mood', 'Vices', 'Career', 'Finance', 'Relations', 'Environment', 'Reflect'];
 
-  // 1. RADAR CHART (Overall Balance)
+  // ==========================================
+  // BEHAVIORAL INTELLIGENCE ENGINE (Insight Generator)
+  // ==========================================
+  const generateInsights = () => {
+    const rawInsights = [];
+    
+    // 1. Correlation: Sleep & Day Rating
+    const lowSleeps = history.filter(d => Number(d.body?.sleepHr) < 6.5 && d.reflect?.dayRating);
+    const goodSleeps = history.filter(d => Number(d.body?.sleepHr) >= 7.5 && d.reflect?.dayRating);
+    
+    if (lowSleeps.length >= 3 && goodSleeps.length >= 3) {
+      const avgLow = lowSleeps.reduce((a,b) => a + Number(b.reflect.dayRating), 0) / lowSleeps.length;
+      const avgGood = goodSleeps.reduce((a,b) => a + Number(b.reflect.dayRating), 0) / goodSleeps.length;
+      
+      const diff = avgGood - avgLow;
+      if (diff >= 1.5) {
+        rawInsights.push({
+          id: 'sleep-mood-corr',
+          category: 'Correlation',
+          icon: '📉',
+          color: '#E03E3E',
+          title: 'Severe Sleep Penalty Detected',
+          text: `Your Day Rating drops by a massive ${diff.toFixed(1)} points on days you sleep under 6.5 hours compared to 7.5+. Sleep deprivation is systematically destroying your momentum.`,
+          action: 'Set a hard technology cutoff at 10 PM tonight.'
+        });
+      }
+    }
+
+    // 2. Trend: Deep Work Regression or Momentum
+    const recent14 = [...history].reverse().slice(0, 14);
+    const first7 = recent14.slice(7, 14);
+    const last7 = recent14.slice(0, 7);
+    
+    if (first7.length > 0 && last7.length > 0) {
+      const avgFirst7 = first7.reduce((a,b) => a + Number(b.career?.deepWorkBlocks || 0), 0) / first7.length;
+      const avgLast7 = last7.reduce((a,b) => a + Number(b.career?.deepWorkBlocks || 0), 0) / last7.length;
+      
+      if (avgLast7 - avgFirst7 > 1.0) {
+         rawInsights.push({
+          id: 'deepwork-trend-up',
+          category: 'Momentum',
+          icon: '🚀',
+          color: '#0F7B0F',
+          title: 'Career Output Scaling Rapidly',
+          text: `Your deep work volume has increased by ${((avgLast7-avgFirst7)*100/Math.max(avgFirst7,1)).toFixed(0)}% this week compared to last week. You are hitting a flow state cycle.`,
+          action: 'Protect your morning calendar to ride out this momentum.'
+        });
+      } else if (avgFirst7 - avgLast7 > 0.8) {
+         rawInsights.push({
+          id: 'deepwork-trend-down',
+          category: 'Warning',
+          icon: '⚠️',
+          color: '#D9730D',
+          title: 'Deep Work Constriction',
+          text: `Your deep work blocks dropped significantly over the last 7 days. Friction is accumulating in your professional output.`,
+          action: 'Block out 90 uninterrupted minutes tomorrow morning. Zero email.'
+        });
+      }
+    }
+
+    // 3. Balance: Radar Anomaly Detection
+    const scores = domains.map(d => ({ name: d, score: calcScore(recent14, d) }));
+    const neglected = scores.filter(s => s.score < 40);
+    const strong = scores.filter(s => s.score >= 80);
+    
+    if (neglected.length > 0 && strong.length > 0) {
+      const weakest = neglected.sort((a,b) => a.score - b.score)[0];
+      const strongest = strong.sort((a,b) => b.score - a.score)[0];
+      rawInsights.push({
+        id: 'radar-imbalance',
+        category: 'Balance',
+        icon: '⚖️',
+        color: '#185FA5',
+        title: 'Systemic Imbalance Flag',
+        text: `Your ${strongest.name} area is thriving (${strongest.score}/100), but it seems to be cannibalizing your ${weakest.name} area which is critically low (${weakest.score}/100).`,
+        action: `Reallocate 5% of your mental bandwidth to ${weakest.name}.`
+      });
+    }
+
+    // 4. Vices: Screen Time 
+    const highScreenDays = recent14.filter(d => Number(d.vices?.screenT || 0) > 4.5);
+    if (highScreenDays.length >= 4) {
+      rawInsights.push({
+        id: 'screen-time-spiral',
+        category: 'Anomaly',
+        icon: '📱',
+        color: '#E03E3E',
+        title: 'Digital Consumption Spiral',
+        text: `You have logged over 4.5 hours of screen time on ${highScreenDays.length} of the last 14 days. This is a severe dopamine leak.`,
+        action: 'Put phone in another room at 8 PM for the next 3 days.'
+      });
+    }
+
+    return rawInsights.filter(insight => !dismissedInsights.includes(insight.id));
+  };
+  
+  const activeInsights = generateInsights();
+
+  // ==========================================
+  // CHART DATA COMPILATION
+  // ==========================================
   const radarData = domains.map(domain => ({
     subject: domain,
     Score: calcScore(history, domain),
     fullMark: 100
   }));
 
-  // 2. LONG TERM TRENDS (Weekly grouping)
   const getWeekNumber = (d) => {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
@@ -100,14 +197,14 @@ export default function InsightsTab() {
   };
   
   const weeklyGroups = {};
-  history.forEach(entry => {
+  [...history].forEach(entry => {
     const d = new Date(entry.date);
     const weekKey = `W${getWeekNumber(d)}`;
     if (!weeklyGroups[weekKey]) weeklyGroups[weekKey] = [];
     weeklyGroups[weekKey].push(entry);
   });
   
-  const trendData = Object.keys(weeklyGroups).reverse().map(week => {
+  const trendData = Object.keys(weeklyGroups).map(week => {
     const weekEntries = weeklyGroups[week];
     return {
       name: week,
@@ -117,18 +214,14 @@ export default function InsightsTab() {
     };
   });
 
-  // 3. DAILY DOMAIN HEATMAP (React Grid Matrix)
-  // Map last 14 days over the 9 domains
-  const recentDays = [...history].reverse().slice(-14);
-  
+  const recent14 = [...history].reverse().slice(0, 14).reverse();
   const getHeatColor = (score) => {
     if (score === 0) return 'var(--notion-input-bg)';
-    if (score < 40) return '#ffcccc'; // Poor (red-ish)
-    if (score < 70) return '#fff0b3'; // Okay (yellow-ish)
-    return 'rgba(24, 95, 165, 0.6)'; // Good (Brand Blue)
+    if (score < 40) return 'rgba(224, 62, 62, 0.4)'; // Red-ish 
+    if (score < 70) return 'rgba(217, 115, 13, 0.5)'; // Orange/Yellow-ish
+    return 'rgba(24, 95, 165, 0.8)'; // Good Blue
   };
 
-  // 4. GITHUB-STYLE STREAKS (Specific Habits over 90 days)
   const streakDays = Array.from({ length: 90 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (89 - i));
@@ -137,18 +230,16 @@ export default function InsightsTab() {
   
   const habits = [
     { label: '🏋️ Workout', check: e => e?.body?.workout === 'yes' },
-    { label: '🧘 Meditation', check: e => Number(e?.mind?.meditMin) > 0 },
+    { label: '🧘 Meditation', check: e => Number(e?.mind?.meditMin) >= 10 },
     { label: '💼 Deep Work', check: e => Number(e?.career?.deepWorkBlocks) >= 2 },
     { label: '🌿 Outdoor', check: e => Number(e?.environ?.outdoorTime) > 30 }
   ];
 
-  // 5. FINANCE BREAKDOWN
-  const financeData = [...history].reverse().slice(-14).map(e => ({
+  const financeData = recent14.map(e => ({
     date: new Date(e.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
     Spent: Number(e.finance?.spent) || 0
   }));
 
-  // 6. CORRELATION (Sleep vs Mood)
   const correlationData = history
     .filter(e => e.body?.sleepHr && e.mood?.mood)
     .map(e => ({
@@ -156,6 +247,29 @@ export default function InsightsTab() {
       mood: Number(e.mood.mood),
       date: e.date
     }));
+
+  // ==========================================
+  // BEHAVIORAL FEEDBACK LOOP (A/B Testing Signal)
+  // ==========================================
+  const handleFeedback = async (insight, actionType) => {
+    // Optimistically hide the card so the user flow is uninterrupted
+    setDismissedInsights([...dismissedInsights, insight.id]);
+    
+    try {
+      // Send telemetry to backend for algorithm learning
+      await api.post('/insights/feedback', {
+        insightId: insight.id,
+        category: insight.category,
+        actionType: actionType, // 'helpful', 'dismissed', 'saved', 'acted'
+        context: {
+          title: insight.title,
+          renderedText: insight.text
+        }
+      });
+    } catch (err) {
+      console.error('Failed to log behavioral feedback', err);
+    }
+  };
 
   return (
     <div style={{ animation: 'smoothDropIn 0.3s ease forwards', paddingBottom: '60px' }}>
@@ -165,6 +279,61 @@ export default function InsightsTab() {
         <p style={{ color: 'var(--notion-gray-text)', fontSize: '14px' }}>System output mapped across 90 days of empirical data.</p>
       </div>
 
+      {/* INTELLIGENCE ENGINE: Insight Cards */}
+      {activeInsights.length > 0 && (
+        <div style={{ marginBottom: '32px' }}>
+          <h3 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '12px' }}>🧠 Autonomic Insights</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {activeInsights.map((insight) => (
+              <div key={insight.id} style={{ 
+                background: '#fff', border: `1px solid ${insight.color}40`, borderLeft: `4px solid ${insight.color}`, 
+                borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>{insight.icon}</span>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: insight.color }}>{insight.title}</span>
+                    <span style={{ fontSize: '10px', background: 'var(--notion-input-bg)', padding: '2px 6px', borderRadius: '4px', color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{insight.category}</span>
+                  </div>
+                  <p style={{ fontSize: '13.5px', color: 'var(--notion-text)', marginBottom: '12px', lineHeight: '1.5' }}>{insight.text}</p>
+                  <div style={{ background: 'rgba(24, 95, 165, 0.05)', display: 'inline-block', padding: '6px 12px', borderRadius: '6px', marginBottom: '16px' }}>
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#185FA5' }}>Action Protocol: <span style={{ fontWeight: 400, color: 'var(--notion-text)' }}>{insight.action}</span></p>
+                  </div>
+                  
+                  {/* Feedback Action Row (Telemetry) */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      onClick={() => handleFeedback(insight, 'acted')} 
+                      style={{ background: '#185FA5', color: '#fff', border: 'none', borderRadius: '4px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.2s' }}
+                      onMouseEnter={e => e.target.style.opacity = 0.9} onMouseLeave={e => e.target.style.opacity = 1}
+                    >
+                      ✓ Will Act On This
+                    </button>
+                    <button 
+                      onClick={() => handleFeedback(insight, 'helpful')} 
+                      style={{ background: 'var(--notion-input-bg)', color: 'var(--notion-text)', border: '1px solid var(--notion-border)', borderRadius: '4px', padding: '6px 12px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', transition: 'background 0.2s' }}
+                      onMouseEnter={e => e.target.style.background = 'var(--notion-border)'} onMouseLeave={e => e.target.style.background = 'var(--notion-input-bg)'}
+                    >
+                      💡 Helpful Context
+                    </button>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => handleFeedback(insight, 'dismissed')}
+                  style={{ background: 'none', border: 'none', color: 'var(--notion-gray-text)', cursor: 'pointer', fontSize: '16px', padding: '4px', opacity: 0.5, transition: 'opacity 0.2s' }}
+                  title="Dismiss (Not useful)"
+                  onMouseEnter={e => e.target.style.opacity = 1}
+                  onMouseLeave={e => e.target.style.opacity = 0.5}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* DASHBOARD CHARTS */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
         
         {/* 1. NINE-DOMAIN RADAR */}
@@ -220,7 +389,7 @@ export default function InsightsTab() {
             {/* Grid */}
             <div style={{ flex: 1, overflowX: 'auto' }}>
               <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                {recentDays.map((d, i) => (
+                {recent14.map((d, i) => (
                   <div key={`hx-${i}`} style={{ width: '20px', fontSize: '9px', color: 'var(--notion-gray-text)', textAlign: 'center' }}>
                     {new Date(d.date).getDate()}
                   </div>
@@ -229,7 +398,7 @@ export default function InsightsTab() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {domains.map(domain => (
                   <div key={`row-${domain}`} style={{ display: 'flex', gap: '4px' }}>
-                    {recentDays.map((d, i) => {
+                    {recent14.map((d, i) => {
                       const score = calcScore([d], domain);
                       return (
                         <div 

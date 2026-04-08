@@ -131,15 +131,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* XP Badge */}
+        {/* Data Depth Indicator */}
         {xp !== null && (
-          <div style={{ margin: '4px 12px 16px', background: 'var(--notion-input-bg)', borderRadius: '8px', padding: '10px 12px', border: '1px solid var(--notion-border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--notion-gray-text)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Level {Math.floor(xp / 100) + 1}</span>
-              <span style={{ fontSize: '11px', color: 'var(--notion-gray-text)', fontWeight: 600 }}>{xp % 100}/100 XP</span>
+          <div style={{ margin: '8px 12px 16px', background: 'transparent', padding: '0 4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--notion-gray-text)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Data Depth</span>
+              <span style={{ fontSize: '11px', color: 'var(--notion-gray-text)', fontWeight: 600 }}>{Math.floor(xp / 10)} Logs</span>
             </div>
-            <div style={{ height: '4px', background: 'var(--notion-border)', borderRadius: '2px', overflow: 'hidden' }}>
-              <div style={{ width: `${xp % 100}%`, height: '100%', background: '#185FA5', borderRadius: '2px', transition: 'width 0.5s ease' }} />
+            <div style={{ fontSize: '10px', color: 'var(--notion-gray-text)', opacity: 0.7 }}>
+              {Math.floor(xp / 10) < 30 ? 'Gathering baseline...' : 'Analytics fully calibrated'}
             </div>
           </div>
         )}

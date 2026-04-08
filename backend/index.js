@@ -17,6 +17,7 @@ connectDB();
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/entries', require('./routes/entries'));
+app.use('/api/insights', require('./routes/insightRoutes'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/experiments', require('./routes/experiments'));
 app.use('/api/tasks', require('./routes/tasks'));
