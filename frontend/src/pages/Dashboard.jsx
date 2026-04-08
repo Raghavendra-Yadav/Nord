@@ -420,34 +420,77 @@ export default function Dashboard() {
 
             {/* MOOD AREA */}
             {activeArea === 'mood' && (
-              <div className="form-grid">
-                {[
-                  { id: 'mood', label: 'Overall Mood' },
-                  { id: 'energy', label: 'Energy Level' },
-                  { id: 'focus', label: 'Focus' },
-                  { id: 'anxiety', label: 'Anxiety' }
-                ].map(item => (
-                  <div key={item.id} className="notion-form-group" style={{ background: 'var(--notion-input-bg)', padding: '16px', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
-                      <label className="notion-label" style={{ marginBottom: 0 }}>{item.label}</label>
-                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#185FA5' }}>{entry.mood[item.id] || 5}</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="1" max="10" 
-                      className="apple-slider" 
-                      value={entry.mood[item.id] || 5} 
-                      onChange={e => updateField('mood', item.id, e.target.value)} 
-                    />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* MENTAL STATE SLIDERS */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>📊</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Mental State</span>
                   </div>
-                ))}
-                
-                <div className="notion-form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="notion-label">Feeling Notes</label>
-                  <textarea className="notion-input" style={{ height: '60px', padding: '12px' }} value={entry.mood.feelNote} onChange={e => updateField('mood', 'feelNote', e.target.value)} placeholder="How do you feel?" />
+                  <div className="form-grid">
+                    {[
+                      { id: 'mood', label: 'Overall Mood', emoji: '😊' },
+                      { id: 'energy', label: 'Energy Level', emoji: '⚡' },
+                      { id: 'focus', label: 'Focus', emoji: '🎯' },
+                      { id: 'anxiety', label: 'Anxiety', emoji: '😰' },
+                      { id: 'stress', label: 'Stress', emoji: '🌡️' },
+                    ].map(item => (
+                      <div key={item.id} className="notion-form-group" style={{ background: 'var(--notion-input-bg)', padding: '16px', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+                          <label className="notion-label" style={{ marginBottom: 0 }}>{item.emoji} {item.label}</label>
+                          <span style={{ fontSize: '15px', fontWeight: 700, color: '#185FA5', minWidth: '32px', textAlign: 'right' }}>{entry.mood[item.id] || 5}/10</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1" max="10"
+                          className="apple-slider"
+                          value={entry.mood[item.id] || 5}
+                          onChange={e => updateField('mood', item.id, e.target.value)}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#aaa', marginTop: '4px' }}>
+                          <span>Low</span><span>High</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+                {/* EMOTIONAL SNAPSHOT */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🎭</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Emotional Snapshot</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Dominant Emotion</label>
+                      <select className="notion-input" value={entry.mood.emotionTags} onChange={e => updateField('mood', 'emotionTags', e.target.value)}>
+                        <option value="">— Select</option>
+                        <option value="motivated">🚀 Motivated</option>
+                        <option value="content">😌 Content</option>
+                        <option value="grateful">🙏 Grateful</option>
+                        <option value="happy">😄 Happy</option>
+                        <option value="calm">🧘 Calm</option>
+                        <option value="anxious">😰 Anxious</option>
+                        <option value="frustrated">😤 Frustrated</option>
+                        <option value="sad">😞 Sad</option>
+                        <option value="bored">😐 Bored</option>
+                        <option value="overwhelmed">🌊 Overwhelmed</option>
+                        <option value="angry">😠 Angry</option>
+                        <option value="lonely">😶 Lonely</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group" style={{ gridColumn: 'span 1' }}>
+                      <label className="notion-label">What's driving today's mood?</label>
+                      <input type="text" className="notion-input" value={entry.mood.feelNote} onChange={e => updateField('mood', 'feelNote', e.target.value)} placeholder="One sentence. Root cause." />
+                    </div>
+                  </div>
+                </div>
+
               </div>
             )}
+
 
             {/* VICES AREA */}
             {activeArea === 'vices' && (
