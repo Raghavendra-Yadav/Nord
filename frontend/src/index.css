@@ -1,0 +1,361 @@
+:root {
+  --notion-bg: #FFFFFF;
+  --notion-text: #000000;
+  --notion-gray-text: rgba(55,53,47,0.65);
+  --notion-border: rgba(15, 15, 15, 0.15);
+  --notion-input-bg: rgba(242, 241, 238, 0.6);
+  --notion-focus: rgba(35, 131, 226, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--notion-bg);
+  color: var(--notion-text);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Premium Smooth Fade/Slide Animation */
+@keyframes smoothDropIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Small, compact Notion container */
+.notion-layout {
+  width: 100%;
+  max-width: 320px;
+  margin: auto;
+  padding: 0;
+  animation: smoothDropIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.notion-title {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.notion-form-group {
+  margin-bottom: 16px;
+}
+
+.notion-label {
+  display: block;
+  font-size: 13px;
+  color: var(--notion-gray-text);
+  margin-bottom: 4px;
+}
+
+/* Small Notion Inputs */
+.notion-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 4px;
+  background-color: var(--notion-input-bg);
+  border: 1px solid var(--notion-border);
+  color: var(--notion-text);
+  font-size: 14px;
+  transition: box-shadow 0.1s ease;
+  outline: none;
+}
+
+.notion-input::placeholder { color: rgba(55,53,47,0.4); }
+
+.notion-input:focus {
+  background-color: #ffffff;
+  border-color: rgba(35, 131, 226, 0.5);
+  box-shadow: 0 0 0 2px rgba(35, 131, 226, 0.2);
+}
+
+/* Small Notion primary button */
+.notion-button {
+  width: 100%;
+  height: 36px;
+  border-radius: 4px;
+  background-color: #0F0F0F;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  margin-top: 12px;
+}
+
+.notion-button:hover {
+  background-color: #2F2F2F;
+}
+
+.notion-button:active {
+  background-color: #000000;
+}
+
+/* Link */
+.notion-link {
+  color: #000;
+  text-decoration: underline;
+  text-decoration-color: rgba(0,0,0,0.2);
+  text-underline-offset: 2px;
+}
+
+.notion-link:hover {
+  text-decoration-color: #000;
+}
+
+.app-container {
+  width: 100%;
+}
+
+/*  --- Notion Sidebar Dashboard Styles --- */
+.app-wrapper {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+.notion-sidebar {
+  width: 250px;
+  background: rgba(247, 247, 245, 0.8);
+  border-right: 1px solid var(--notion-border);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-link {
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--notion-gray-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  text-align: left;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-link:hover {
+  background: rgba(15, 15, 15, 0.05);
+  color: var(--notion-text);
+}
+
+.sidebar-link.active {
+  background: rgba(15, 15, 15, 0.08);
+  color: var(--notion-text);
+  font-weight: 600;
+}
+
+.sidebar-section {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(55,53,47,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 24px 0 8px 12px;
+}
+
+.notion-right-sidebar {
+  width: 250px;
+  background: #FFFFFF;
+  border-left: 1px solid var(--notion-border);
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.02);
+}
+
+.stats-card {
+  background: var(--notion-input-bg);
+  border: 1px solid var(--notion-border);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.notion-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 40px;
+}
+
+.notion-dashboard {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--notion-border);
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.dashboard-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--notion-border);
+}
+
+.area-tab {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--notion-gray-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.1s;
+}
+
+.area-tab:hover {
+  background: rgba(15, 15, 15, 0.05);
+  color: var(--notion-text);
+}
+
+.area-tab.active {
+  background: var(--notion-text);
+  color: #FFFFFF;
+}
+
+.dashboard-content {
+  background: #FFFFFF;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .notion-dashboard {
+    padding: 30px;
+  }
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .notion-dashboard {
+    padding: 20px;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Clean iOS Settings Slider */
+.apple-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: #E5E5EA;
+  border-radius: 2px;
+  outline: none;
+  margin-top: 8px;
+}
+
+.apple-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 0.5px solid rgba(0,0,0,0.04);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.apple-slider::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+/* Apple Specific Trial UI Components */
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.apple-pill-btn {
+  background: #000;
+  color: #fff;
+  border-radius: 24px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.apple-pill-btn:hover { background: #333; transform: scale(1.02); }
+.apple-pill-btn:active { transform: scale(0.96); }
+
+.apple-pill-btn-secondary {
+  background: rgba(0,0,0,0.04);
+  color: #000;
+  border-radius: 24px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.apple-pill-btn-secondary:hover { background: rgba(0,0,0,0.08); transform: scale(1.02); }
+.apple-pill-btn-secondary:active { transform: scale(0.96); }
+
+.apple-exp-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04), inset 0 0 0 0.5px rgba(0,0,0,0.05);
+  padding: 28px;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease;
+  animation: slideUpFade 0.5s ease-out forwards;
+}
+.apple-exp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08), inset 0 0 0 0.5px rgba(0,0,0,0.05);
+}
