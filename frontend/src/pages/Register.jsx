@@ -12,7 +12,7 @@ const Register = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Sign up – Life Tracker";
+    document.title = "Sign up – Nord";
   }, []);
 
   const handleSubmit = async (e) => {

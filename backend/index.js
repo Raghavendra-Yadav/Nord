@@ -23,7 +23,7 @@ app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/skincare', require('./routes/skincare'));
 
 app.get('/', (req, res) => {
-  res.send('Life Tracker API is running!');
+  res.send('Nord API is running!');
 });
 
 const PORT = process.env.PORT || 5000;

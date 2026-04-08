@@ -10,7 +10,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Log in – Life Tracker";
+    document.title = "Log in – Nord";
   }, []);
 
   const handleSubmit = async (e) => {
