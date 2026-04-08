@@ -22,7 +22,8 @@ const AREAS = [
 ];
 
 export default function Dashboard() {
-  const { logout, updateXp } = useContext(AuthContext);
+  const { user, logout, updateXp } = useContext(AuthContext);
+  const xp = user?.xp || 0;
   const [mainTab, setMainTab] = useState('log');
   const [activeArea, setActiveArea] = useState('body');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -117,29 +118,77 @@ export default function Dashboard() {
   return (
     <div className="app-wrapper">
       
-      {/* Notion-Style Permanent Left Sidebar */}
+      {/* Notion-Style Sidebar */}
       <aside className="notion-sidebar">
-        {/* Daily Stoic Embedded Quote */}
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.5px', color: '#000' }}>Nord</div>
-          <div style={{ fontSize: '11px', color: 'var(--notion-gray-text)', fontStyle: 'italic', marginTop: '2px' }}>Your life, engineered.</div>
+
+        {/* Logo + Wordmark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', marginBottom: '8px' }}>
+          <img src="/favicon.svg" alt="Nord" style={{ width: '26px', height: '26px' }} />
+          <div>
+            <div style={{ fontSize: '17px', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--notion-text)' }}>Nord</div>
+            <div style={{ fontSize: '10px', color: 'var(--notion-gray-text)', letterSpacing: '0.2px', marginTop: '1px', fontStyle: 'italic' }}>Your life, engineered.</div>
+          </div>
         </div>
 
-        <div className="sidebar-section">Tracking Hub</div>
-        <button className={`sidebar-link ${mainTab === 'log' ? 'active' : ''}`} onClick={() => setMainTab('log')}>✍️ Daily Log</button>
-        <button className={`sidebar-link ${mainTab === 'history' ? 'active' : ''}`} onClick={() => setMainTab('history')}>📊 This Week</button>
-        <button className={`sidebar-link ${mainTab === 'month' ? 'active' : ''}`} onClick={() => setMainTab('month')}>🗓️ Month Review</button>
-        
-        <div className="sidebar-section">Features</div>
-        <button className={`sidebar-link ${mainTab === 'coach' ? 'active' : ''}`} onClick={() => setMainTab('coach')}>🤖 AI Sunday Coach</button>
-        <button className={`sidebar-link ${mainTab === 'experiments' ? 'active' : ''}`} onClick={() => setMainTab('experiments')}>🧪 Trial Experiments</button>
-        <button className={`sidebar-link ${mainTab === 'execution' ? 'active' : ''}`} onClick={() => setMainTab('execution')}>🎯 Execution Matrix</button>
-        <button className={`sidebar-link ${mainTab === 'skincare' ? 'active' : ''}`} onClick={() => setMainTab('skincare')}>💧 Skincare Regimen</button>
-        <div style={{ flex: 1 }}></div>
+        {/* XP Badge */}
+        {xp !== null && (
+          <div style={{ margin: '4px 12px 16px', background: 'var(--notion-input-bg)', borderRadius: '8px', padding: '10px 12px', border: '1px solid var(--notion-border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--notion-gray-text)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Level {Math.floor(xp / 100) + 1}</span>
+              <span style={{ fontSize: '11px', color: 'var(--notion-gray-text)', fontWeight: 600 }}>{xp % 100}/100 XP</span>
+            </div>
+            <div style={{ height: '4px', background: 'var(--notion-border)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: `${xp % 100}%`, height: '100%', background: '#185FA5', borderRadius: '2px', transition: 'width 0.5s ease' }} />
+            </div>
+          </div>
+        )}
 
-        <button onClick={logout} className="sidebar-link" style={{ border: '1px solid var(--notion-border)', justifyContent: 'center' }}>
-          Log out
+        {/* Nav — Tracking */}
+        <div className="sidebar-section">Tracking</div>
+        <button className={`sidebar-link ${mainTab === 'log' ? 'active' : ''}`} onClick={() => setMainTab('log')}>
+          <span style={{ fontSize: '14px' }}>✏️</span> Daily Log
         </button>
+        <button className={`sidebar-link ${mainTab === 'history' ? 'active' : ''}`} onClick={() => setMainTab('history')}>
+          <span style={{ fontSize: '14px' }}>📊</span> This Week
+        </button>
+        <button className={`sidebar-link ${mainTab === 'month' ? 'active' : ''}`} onClick={() => setMainTab('month')}>
+          <span style={{ fontSize: '14px' }}>🗓️</span> Month Review
+        </button>
+
+        {/* Nav — Tools */}
+        <div className="sidebar-section">Tools</div>
+        <button className={`sidebar-link ${mainTab === 'coach' ? 'active' : ''}`} onClick={() => setMainTab('coach')}>
+          <span style={{ fontSize: '14px' }}>🤖</span> AI Coach
+        </button>
+        <button className={`sidebar-link ${mainTab === 'experiments' ? 'active' : ''}`} onClick={() => setMainTab('experiments')}>
+          <span style={{ fontSize: '14px' }}>🧪</span> Experiments
+        </button>
+        <button className={`sidebar-link ${mainTab === 'execution' ? 'active' : ''}`} onClick={() => setMainTab('execution')}>
+          <span style={{ fontSize: '14px' }}>🎯</span> Execution Matrix
+        </button>
+        <button className={`sidebar-link ${mainTab === 'skincare' ? 'active' : ''}`} onClick={() => setMainTab('skincare')}>
+          <span style={{ fontSize: '14px' }}>💧</span> Skincare
+        </button>
+
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+
+        {/* User + Logout */}
+        <div style={{ borderTop: '1px solid var(--notion-border)', paddingTop: '12px', marginTop: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', marginBottom: '4px' }}>
+            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#185FA5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+              {user?.name?.[0]?.toUpperCase() || 'N'}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--notion-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'Nord User'}</div>
+              <div style={{ fontSize: '11px', color: 'var(--notion-gray-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email || ''}</div>
+            </div>
+          </div>
+          <button onClick={logout} className="sidebar-link" style={{ color: 'rgba(200,50,50,0.75)' }}>
+            <span style={{ fontSize: '14px' }}>→</span> Sign out
+          </button>
+        </div>
+
       </aside>
 
       {/* Main Content Pane */}
