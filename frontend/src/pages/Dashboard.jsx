@@ -120,9 +120,9 @@ export default function Dashboard() {
       {/* Notion-Style Permanent Left Sidebar */}
       <aside className="notion-sidebar">
         {/* Daily Stoic Embedded Quote */}
-        <div style={{ marginBottom: '32px', background: '#F2F1EE', padding: '12px', borderRadius: '6px', fontSize: '11px', color: 'var(--notion-gray-text)' }}>
-          "You have power over your mind - not outside events. Realize this, and you will find strength."
-          <br /><strong style={{ color: '#aaa', marginTop: '4px', display: 'block' }}>- Marcus Aurelius</strong>
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.5px', color: '#000' }}>Nord</div>
+          <div style={{ fontSize: '11px', color: 'var(--notion-gray-text)', fontStyle: 'italic', marginTop: '2px' }}>Your life, engineered.</div>
         </div>
 
         <div className="sidebar-section">Tracking Hub</div>

@@ -40,7 +40,10 @@ const Login = () => {
         </svg>
       </div>
 
-      <h1 className="notion-title">Log in</h1>
+      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-1px', margin: '0 0 4px 0' }}>Nord</h1>
+        <p style={{ fontSize: '13px', color: 'rgba(55,53,47,0.5)', margin: 0, fontStyle: 'italic', letterSpacing: '0.3px' }}>Your life, engineered.</p>
+      </div>
 
       {error && (
         <div style={{ color: '#E03E3E', fontSize: 13, marginBottom: '20px', textAlign: 'center', background: '#FDEAE9', padding: '10px', borderRadius: '4px' }}>
