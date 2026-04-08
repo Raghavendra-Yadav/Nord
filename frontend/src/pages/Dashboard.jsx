@@ -494,42 +494,95 @@ export default function Dashboard() {
 
             {/* VICES AREA */}
             {activeArea === 'vices' && (
-              <div className="form-grid">
-                <div className="notion-form-group">
-                  <label className="notion-label">Screen Time (hours)</label>
-                  <input type="number" className="notion-input" value={entry.vices.screenT} onChange={e => updateField('vices', 'screenT', e.target.value)} placeholder="0.0" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+                {/* SUBSTANCES */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>💊</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Substances</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Caffeine (cups)</label>
+                      <input type="number" className="notion-input" value={entry.vices.coffee} onChange={e => updateField('vices', 'coffee', e.target.value)} placeholder="0" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Nicotine / Vaping?</label>
+                      <select className="notion-input" value={entry.vices.vaping} onChange={e => updateField('vices', 'vaping', e.target.value)}>
+                        <option value="no">✅ Clean</option>
+                        <option value="yes">❌ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Vape Sessions (est.)</label>
+                      <input type="number" className="notion-input" value={entry.vices.vapAmt} onChange={e => updateField('vices', 'vapAmt', e.target.value)} placeholder="0" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Alcohol?</label>
+                      <select className="notion-input" value={entry.vices.alcohol} onChange={e => updateField('vices', 'alcohol', e.target.value)}>
+                        <option value="no">✅ None</option>
+                        <option value="yes">❌ Yes</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Drinks (#)</label>
+                      <input type="number" className="notion-input" value={entry.vices.alcDrinks} onChange={e => updateField('vices', 'alcDrinks', e.target.value)} placeholder="0" />
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Coffee (cups)</label>
-                  <input type="number" className="notion-input" value={entry.vices.coffee} onChange={e => updateField('vices', 'coffee', e.target.value)} placeholder="0" />
+
+                {/* SCREEN & DIGITAL */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>📱</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Screen & Digital</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Screen Time (hours)</label>
+                      <input type="number" className="notion-input" value={entry.vices.screenT} onChange={e => updateField('vices', 'screenT', e.target.value)} placeholder="0" step="0.5" />
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Doomscrolling?</label>
+                      <select className="notion-input" value={entry.vices.doomScroll} onChange={e => updateField('vices', 'doomScroll', e.target.value)}>
+                        <option value="no">✅ No</option>
+                        <option value="little">⚠️ A bit</option>
+                        <option value="yes">❌ Yes, bad</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Alcohol</label>
-                  <select className="notion-input" value={entry.vices.alcohol} onChange={e => updateField('vices', 'alcohol', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
+
+                {/* BEHAVIORAL */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--notion-border)' }}>
+                    <span style={{ fontSize: '16px' }}>🔐</span>
+                    <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#555' }}>Behavioral</span>
+                    <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto' }}>Private — only you see this</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="notion-form-group">
+                      <label className="notion-label">Porn</label>
+                      <select className="notion-input" value={entry.vices.porn} onChange={e => updateField('vices', 'porn', e.target.value)}>
+                        <option value="no">✅ Clean</option>
+                        <option value="yes">❌ Relapsed</option>
+                      </select>
+                    </div>
+                    <div className="notion-form-group">
+                      <label className="notion-label">Masturbation</label>
+                      <select className="notion-input" value={entry.vices.mast} onChange={e => updateField('vices', 'mast', e.target.value)}>
+                        <option value="no">✅ Clean</option>
+                        <option value="yes">❌ Yes</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Drinks (Amt)</label>
-                  <input type="number" className="notion-input" value={entry.vices.alcDrinks} onChange={e => updateField('vices', 'alcDrinks', e.target.value)} placeholder="0" />
-                </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Vaping</label>
-                  <select className="notion-input" value={entry.vices.vaping} onChange={e => updateField('vices', 'vaping', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
-                </div>
-                <div className="notion-form-group">
-                  <label className="notion-label">Doomscrolling</label>
-                  <select className="notion-input" value={entry.vices.doomScroll} onChange={e => updateField('vices', 'doomScroll', e.target.value)}>
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
-                </div>
+
               </div>
             )}
+
+
 
             {/* CAREER AREA */}
             {activeArea === 'career' && (
