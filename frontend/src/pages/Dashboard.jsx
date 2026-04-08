@@ -198,8 +198,17 @@ export default function Dashboard() {
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', marginBottom: '4px' }}>
-            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#185FA5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-              {user?.name?.[0]?.toUpperCase() || 'N'}
+            <div style={{ 
+              width: '30px', height: '30px', borderRadius: '50%', background: '#185FA5', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              fontSize: '13px', fontWeight: 700, color: '#fff', flexShrink: 0,
+              overflow: 'hidden'
+            }}>
+              {user?.profilePic ? (
+                <img src={user.profilePic} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                user?.name?.[0]?.toUpperCase() || 'N'
+              )}
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--notion-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'Nord User'}</div>

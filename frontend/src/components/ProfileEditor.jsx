@@ -1,12 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import api from '../api/axiosConfig';
 
 export default function ProfileEditor() {
-  const { user } = useContext(AuthContext);
+  const { user, updateUser } = useContext(AuthContext);
   
   // State for the avatar
   const [avatarPreview, setAvatarPreview] = useState(user?.profilePic || null);
-  const [, setAvatarFile] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   // State for modular sections
   const [modules, setModules] = useState([
@@ -78,18 +79,56 @@ export default function ProfileEditor() {
     setHasUnsavedChanges(true);
   };
 
+  // Client-side image "crunching" to save MongoDB space
+  const compressImage = (base64Str) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 400;
+        const MAX_HEIGHT = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Quality 0.7 JPEG provides excellent compression vs quality balance
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+    });
+  };
+
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be under 5MB");
+    
+    // We can allow larger original files now since we crunch them
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Please choose an image under 10MB");
       return;
     }
     
     setAvatarFile(file);
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setAvatarPreview(reader.result);
+    reader.onloadend = async () => {
+      const crunched = await compressImage(reader.result);
+      setAvatarPreview(crunched);
       setHasUnsavedChanges(true);
     };
     reader.readAsDataURL(file);
@@ -98,15 +137,23 @@ export default function ProfileEditor() {
   const handleSave = async () => {
     setSavingState('saving');
     try {
-      // In a real app we would use FormData to upload the image to S3/Cloudinary 
-      // and send the module preferences JSON to the backend.
-      // await api.put('/users/profile', { modules, avatar: avatarFile });
+      const identityModule = modules.find(m => m.id === 'identity');
       
-      setTimeout(() => {
-        setSavingState('success');
-        setHasUnsavedChanges(false);
-        setTimeout(() => setSavingState('idle'), 2000);
-      }, 1000); // simulate network request
+      // Persist to backend
+      const { data } = await api.put('/auth/profile', {
+        name: identityModule.data.name,
+        profilePic: avatarPreview // Sending base64 for now as simplified implementation
+      });
+
+      // Update global context & local storage
+      updateUser({
+        name: data.name,
+        profilePic: data.profilePic
+      });
+      
+      setSavingState('success');
+      setHasUnsavedChanges(false);
+      setTimeout(() => setSavingState('idle'), 2000);
       
     } catch (err) {
       console.error(err);

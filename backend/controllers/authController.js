@@ -33,6 +33,7 @@ const registerUser = async (req, res) => {
         _id: user.id,
         name: user.name,
         email: user.email,
+        profilePic: user.profilePic,
         xp: user.xp,
         level: user.level,
         badges: user.badges,
@@ -59,6 +60,7 @@ const loginUser = async (req, res) => {
         _id: user.id,
         name: user.name,
         email: user.email,
+        profilePic: user.profilePic,
         xp: user.xp,
         level: user.level,
         badges: user.badges,
@@ -112,4 +114,34 @@ const addXp = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, getMe, addXp };
+// @desc    Update user profile (image, name, etc)
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res) => {
+  try {
+    const { name, profilePic } = req.body;
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { name, profilePic },
+      { new: true }
+    );
+
+    if (updatedUser) {
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        profilePic: updatedUser.profilePic,
+        xp: updatedUser.xp,
+        level: updatedUser.level,
+        token: generateToken(updatedUser._id),
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { registerUser, loginUser, getMe, addXp, updateProfile };
