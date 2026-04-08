@@ -3,6 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../api/axiosConfig';
 import HistoryTab from '../components/HistoryTab';
 import MonthTab from '../components/MonthTab';
+import InsightsTab from '../components/InsightsTab';
 import CoachTab from '../components/CoachTab';
 import RightSidebar from '../components/RightSidebar';
 import ExperimentsTab from '../components/ExperimentsTab';
@@ -154,6 +155,9 @@ export default function Dashboard() {
         <button className={`sidebar-link ${mainTab === 'month' ? 'active' : ''}`} onClick={() => setMainTab('month')}>
           <span style={{ fontSize: '14px' }}>🗓️</span> Month Review
         </button>
+        <button className={`sidebar-link ${mainTab === 'insights' ? 'active' : ''}`} onClick={() => setMainTab('insights')}>
+          <span style={{ fontSize: '14px' }}>📈</span> Deep Analytics
+        </button>
 
         {/* Nav — Tools */}
         <div className="sidebar-section">Tools</div>
@@ -249,6 +253,7 @@ export default function Dashboard() {
       <div className="dashboard-content">
         {mainTab === 'history' && <HistoryTab />}
         {mainTab === 'month' && <MonthTab />}
+        {mainTab === 'insights' && <InsightsTab />}
         {mainTab === 'coach' && <CoachTab date={date} />}
         {mainTab === 'experiments' && <ExperimentsTab />}
         {mainTab === 'execution' && <ExecutionTab date={date} />}

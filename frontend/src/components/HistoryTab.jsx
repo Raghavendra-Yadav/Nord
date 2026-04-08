@@ -141,37 +141,53 @@ export default function HistoryTab() {
 
       {/* Wins & Struggles Feed */}
       <div style={{ marginTop: '32px' }}>
-        <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--notion-gray-text)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>The Daily Tape</p>
+        <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--notion-gray-text)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          The Daily Tape <span style={{ textTransform: 'none', fontWeight: 400 }}>(This Week: Mon-Sun)</span>
+        </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {[...history].reverse().map(entry => {
-            const dateObj = new Date(entry.date);
-            return (
-              <div key={entry._id} style={{ padding: '16px', background: 'var(--notion-input-bg)', borderRadius: '8px', border: '1px solid var(--notion-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--notion-text)' }}>
-                    {dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                  </span>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#185FA5', background: 'rgba(24, 95, 165, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
-                    Rating: {entry.reflect?.dayRating || '-'}/10
-                  </span>
+          {[...history]
+            .filter(entry => {
+              const entryDate = new Date(entry.date);
+              
+              // Determine start of current week (Monday)
+              const now = new Date();
+              now.setHours(0,0,0,0);
+              const currentDay = now.getDay() === 0 ? 7 : now.getDay(); // 1 = Mon ... 7 = Sun
+              const monday = new Date(now);
+              monday.setDate(now.getDate() - currentDay + 1);
+              
+              return entryDate >= monday;
+            })
+            .reverse()
+            .map(entry => {
+              const dateObj = new Date(entry.date);
+              return (
+                <div key={entry._id} style={{ padding: '16px', background: 'var(--notion-input-bg)', borderRadius: '8px', border: '1px solid var(--notion-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--notion-text)' }}>
+                      {dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                    </span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#185FA5', background: 'rgba(24, 95, 165, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                      Rating: {entry.reflect?.dayRating || '-'}/10
+                    </span>
+                  </div>
+                  
+                  <div style={{ fontSize: '13.5px', color: 'var(--notion-text)', lineHeight: '1.5' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ flexShrink: 0 }}>🏆</span>
+                      <span><strong style={{ color: 'var(--notion-gray-text)' }}>Win:</strong> {entry.reflect?.wins || 'No win recorded'}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <span style={{ flexShrink: 0 }}>🧗</span>
+                      <span><strong style={{ color: 'var(--notion-gray-text)' }}>Struggle:</strong> {entry.reflect?.struggles || 'No struggle recorded'}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                      <span style={{ flexShrink: 0 }}>🎯</span>
+                      <span><strong style={{ color: 'var(--notion-gray-text)' }}>Next Day Intent:</strong> {entry.reflect?.intention || 'None set'}</span>
+                    </div>
+                  </div>
                 </div>
-                
-                <div style={{ fontSize: '13.5px', color: 'var(--notion-text)', lineHeight: '1.5' }}>
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ flexShrink: 0 }}>🏆</span>
-                    <span><strong style={{ color: 'var(--notion-gray-text)' }}>Win:</strong> {entry.reflect?.wins || 'No win recorded'}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <span style={{ flexShrink: 0 }}>🧗</span>
-                    <span><strong style={{ color: 'var(--notion-gray-text)' }}>Struggle:</strong> {entry.reflect?.struggles || 'No struggle recorded'}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                    <span style={{ flexShrink: 0 }}>🎯</span>
-                    <span><strong style={{ color: 'var(--notion-gray-text)' }}>Next Day Intent:</strong> {entry.reflect?.intention || 'None set'}</span>
-                  </div>
-                </div>
-              </div>
-            );
+              );
           })}
         </div>
       </div>
