@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
@@ -14,19 +13,32 @@ const generateToken = (id) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    
+
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please add all fields' });
     }
 
-    const userExists = await User.findOne({ email });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Please provide a valid email address' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+
+    if (name.trim().length < 2) {
+      return res.status(400).json({ message: 'Name must be at least 2 characters' });
+    }
+
+    const userExists = await User.findOne({ email: email.toLowerCase() });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase(),
       password,
     });
     if (user) {
@@ -55,7 +67,11 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (user && (await user.matchPassword(password))) {
       res.json({
         _id: user.id,
@@ -92,11 +108,16 @@ const getMe = async (req, res) => {
 // @access  Private
 const addXp = async (req, res) => {
   try {
-    const { amount, reason } = req.body;
+    const { amount } = req.body;
+    const xpAmount = parseInt(amount);
+    if (isNaN(xpAmount) || xpAmount <= 0) {
+      return res.status(400).json({ message: 'Amount must be a positive number' });
+    }
+
     const user = await User.findById(req.user.id);
-    
+
     // XP Scaling
-    user.xp += parseInt(amount) || 0;
+    user.xp += xpAmount;
     
     // Level Up Formula (e.g., Level 2 needs 100XP, Level 3 needs 250XP)
     const nextLevelXp = user.level * 100 * 1.5;
@@ -163,15 +184,12 @@ const forgotPassword = async (req, res) => {
     // Normally we would send email here using nodemailer
     // For this demonstration, we'll return the token in the response (useful for testing when no email provider is configured)
     
-    // Create reset url
-    const resetUrl = `${req.protocol}://${req.get('host')}/resetpassword/${resetToken}`;
-    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
-    
-    res.status(200).json({ 
-      success: true, 
-      data: 'Email sent', 
-      token: resetToken // Only included for dev/testing purposes
-    });
+    const responseData = { success: true, data: 'Email sent' };
+    // Only expose the raw token in non-production environments (no email provider configured)
+    if (process.env.NODE_ENV !== 'production') {
+      responseData.token = resetToken;
+    }
+    res.status(200).json(responseData);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -195,6 +213,10 @@ const resetPassword = async (req, res) => {
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid token' });
+    }
+
+    if (!req.body.password || req.body.password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
     // Set new password

@@ -3,6 +3,15 @@ const Experiment = require('../models/Experiment');
 exports.createExperiment = async (req, res) => {
   try {
     const { title, hypothesis, durationDays, frequency } = req.body;
+
+    if (!title || title.trim().length < 2) {
+      return res.status(400).json({ message: 'Title must be at least 2 characters' });
+    }
+    const days = parseInt(durationDays);
+    if (isNaN(days) || days < 1 || days > 365) {
+      return res.status(400).json({ message: 'Duration must be between 1 and 365 days' });
+    }
+
     const experiment = new Experiment({
       user: req.user.id,
       title,
