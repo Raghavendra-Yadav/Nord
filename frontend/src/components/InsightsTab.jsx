@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, 
+  ResponsiveContainer, 
   LineChart, Line, XAxis, YAxis, Tooltip, Legend, 
   BarChart, Bar, ScatterChart, Scatter, Cell
 } from 'recharts';
 import api from '../api/axiosConfig';
+import { AnalyticsCard, KpiCard, NotionTooltip } from './ui/NotionAnalytics';
+import { WhoopPanel, GlassChartPanel, ScoreRing, DomainBars } from './ui/WhoopAnalytics';
+import { getVal, calculateScore, calculatePearsonCorrelation, calculateIEI } from '../utils/analyticsEngine';
 
 /**
  * 📈 Deep Analytics & Intelligence Dashboard
@@ -14,12 +17,14 @@ export default function InsightsTab() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dismissedInsights, setDismissedInsights] = useState([]);
+  const [focusDomain, setFocusDomain] = useState('All');
+  const [windowDays, setWindowDays] = useState(90);
 
   // Fetch up to 90 days of data for rich analytics
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const { data } = await api.get('/entries/history?days=90');
+        const { data } = await api.get(`/entries/history?days=${windowDays}`);
         setHistory(data);
       } catch (err) {
         console.error("Failed to fetch analytics data", err);
@@ -27,7 +32,7 @@ export default function InsightsTab() {
       setLoading(false);
     };
     fetchHistory();
-  }, []);
+  }, [windowDays]);
 
   if (loading) {
     return <div style={{ padding: '40px', color: 'var(--notion-gray-text)' }}>Generating Intelligence Matrix...</div>;
@@ -37,73 +42,18 @@ export default function InsightsTab() {
     return <div style={{ padding: '40px', color: 'var(--notion-gray-text)' }}>No data logged yet. Log today's entry to see your Deep Analytics.</div>;
   }
 
-  // ==========================================
-  // DATA SCORING ENGINE (0-100 normalization)
-  // ==========================================
-  
+  // Wrapper for centralized scoring logic (averages over arrays for Insight consistency)
   const calcScore = (entriesArr, domain) => {
     let sum = 0, count = 0;
     entriesArr.forEach(entry => {
-      let score = null;
-      switch (domain) {
-        case 'Body':
-          if (entry.body?.sleepHr) score = Math.min((Number(entry.body.sleepHr) / 8) * 100, 100);
-          break;
-        case 'Mind':
-          if (entry.mind?.readMin !== undefined) score = Math.min((Number(entry.mind.readMin || 0) / 30) * 100, 100);
-          break;
-        case 'Mood':
-          if (entry.mood?.mood) score = (Number(entry.mood.mood) / 10) * 100;
-          break;
-        case 'Vices':
-          if (entry.vices?.screenT !== undefined) score = Math.max(100 - (Number(entry.vices.screenT || 0) * 15), 0); 
-          break;
-        case 'Career':
-          if (entry.career?.deepWorkBlocks !== undefined) score = Math.min((Number(entry.career.deepWorkBlocks || 0) / 3) * 100, 100);
-          break;
-        case 'Finance':
-          if (entry.finance?.spent !== undefined) score = entry.finance.spent < 20 ? 100 : Math.max(100 - (Number(entry.finance.spent)/3), 0);
-          break;
-        case 'Relations':
-          if (entry.relations?.meaningConvo) score = entry.relations.meaningConvo === 'yes' ? 100 : 0;
-          break;
-        case 'Environment':
-          if (entry.environ?.roomClean) score = entry.environ.roomClean === 'yes' ? 100 : (entry.environ.roomClean === 'partial' ? 50 : 0);
-          break;
-        case 'Reflect':
-          if (entry.reflect?.dayRating) score = (Number(entry.reflect.dayRating) / 10) * 100;
-          break;
-        default: break;
-      }
-      if (score !== null) { sum += score; count++; }
+      const s = calculateScore(entry, domain);
+      if (s !== null) { sum += s; count++; }
     });
-    return count > 0 ? Math.round(sum / count) : 0;
+    return count > 0 ? Math.round(sum / count) : null;
   };
 
   const domains = ['Body', 'Mind', 'Mood', 'Vices', 'Career', 'Finance', 'Relations', 'Environment', 'Reflect'];
-
-  // ==========================================
-  // MOTIVATION TRANSPARENCY (Intrinsic vs Extrinsic)
-  // ==========================================
-  const calculateIEI = (entry) => {
-    if (!entry) return { date: '', score: 50 };
-    let score = 50; // starts neutral
-    
-    // Extrinsic Signals (Hurried, minimal reflection, phone addiction)
-    if (!entry.reflect?.gratitude || entry.reflect.gratitude.length < 5) score -= 20;
-    if (!entry.reflect?.wins || entry.reflect.wins.length < 5) score -= 10;
-    if (Number(entry.vices?.screenT || 0) > 4.5) score -= 10;
-    
-    // Intrinsic Signals (Depth, intentionality, social connection)
-    if (entry.reflect?.gratitude && entry.reflect.gratitude.length > 20) score += 20;
-    if (entry.reflect?.struggles && entry.reflect.struggles.length > 15) score += 15;
-    if (entry.relations?.meaningConvo === 'yes') score += 15;
-    
-    return {
-      date: new Date(entry.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
-      score: Math.max(0, Math.min(100, score)) // clamp 0-100
-    };
-  };
+  const domainOptions = ['All', ...domains];
 
   // ==========================================
   // BEHAVIORAL INTELLIGENCE ENGINE (Insight Generator)
@@ -111,29 +61,35 @@ export default function InsightsTab() {
   const generateInsights = () => {
     const rawInsights = [];
     
-    // 1. Correlation: Sleep & Day Rating
-    const lowSleeps = history.filter(d => Number(d.body?.sleepHr) < 6.5 && d.reflect?.dayRating);
-    const goodSleeps = history.filter(d => Number(d.body?.sleepHr) >= 7.5 && d.reflect?.dayRating);
-    
-    if (lowSleeps.length >= 3 && goodSleeps.length >= 3) {
-      const avgLow = lowSleeps.reduce((a,b) => a + Number(b.reflect.dayRating), 0) / lowSleeps.length;
-      const avgGood = goodSleeps.reduce((a,b) => a + Number(b.reflect.dayRating), 0) / goodSleeps.length;
-      
-      const diff = avgGood - avgLow;
-      if (diff >= 1.5) {
-        rawInsights.push({
-          id: 'sleep-mood-corr',
-          category: 'Correlation',
-          icon: '📉',
-          color: '#E03E3E',
-          title: 'Severe Sleep Penalty Detected',
-          text: `Your Day Rating drops by a massive ${diff.toFixed(1)} points on days you sleep under 6.5 hours compared to 7.5+. Sleep deprivation is systematically destroying your momentum.`,
-          action: 'Set a hard technology cutoff at 10 PM tonight.'
-        });
-      }
+    // 1. ADVANCED: Pearson Correlation (Sleep vs Day Rating)
+    const sleepMoodCorr = calculatePearsonCorrelation(history, 'body.sleepH', 'reflect.dayRating');
+    if (Math.abs(sleepMoodCorr) > 0.4) {
+      rawInsights.push({
+        id: 'sleep-mood-pearson',
+        category: 'Statistical Signal',
+        icon: sleepMoodCorr > 0 ? '📈' : '📉',
+        color: sleepMoodCorr > 0 ? '#0F7B0F' : '#E03E3E',
+        title: `Sleep/Focus Correlation: ${(sleepMoodCorr * 100).toFixed(0)}%`,
+        text: `We've detected a ${sleepMoodCorr > 0 ? 'strong positive' : 'negative'} mathematical relationship between your sleep duration and your daily performance rating. ${Math.abs(sleepMoodCorr * 100).toFixed(0)}% of your variance in output is directly explained by sleep consistency.`,
+        action: sleepMoodCorr > 0 ? 'Maintain this sleep window to stabilize highs.' : 'Your baseline is currently volatile. Prioritize an 8h sleep lock.'
+      });
     }
 
-    // 2. Trend: Deep Work Regression or Momentum
+    // 2. ADVANCED: Cross-Domain Friction (Screen Time vs Deep Work)
+    const screenWorkCorr = calculatePearsonCorrelation(history, 'vices.screenT', 'career.deepWorkBlocks');
+    if (screenWorkCorr < -0.3) {
+      rawInsights.push({
+        id: 'screen-work-friction',
+        category: 'Systemic Friction',
+        icon: '📱',
+        color: '#D9730D',
+        title: 'Digital Capture Coefficient',
+        text: `Data reveals a inverse correlation (${(screenWorkCorr * 100).toFixed(0)}%) between Screen Time and Deep Work. Every hour of additional phone usage is mathematically eroding your professional depth.`,
+        action: 'Implement a "No Phone" rule for the first 90 minutes of your workday.'
+      });
+    }
+
+    // 3. Trend Analysis (Momentum Vectors)
     const recent14 = [...history].reverse().slice(0, 14);
     const first7 = recent14.slice(7, 14);
     const last7 = recent14.slice(0, 7);
@@ -144,23 +100,13 @@ export default function InsightsTab() {
       
       if (avgLast7 - avgFirst7 > 1.0) {
          rawInsights.push({
-          id: 'deepwork-trend-up',
+          id: 'momentum-vector-up',
           category: 'Momentum',
           icon: '🚀',
           color: '#0F7B0F',
-          title: 'Career Output Scaling Rapidly',
-          text: `Your deep work volume has increased by ${((avgLast7-avgFirst7)*100/Math.max(avgFirst7,1)).toFixed(0)}% this week compared to last week. You are hitting a flow state cycle.`,
-          action: 'Protect your morning calendar to ride out this momentum.'
-        });
-      } else if (avgFirst7 - avgLast7 > 0.8) {
-         rawInsights.push({
-          id: 'deepwork-trend-down',
-          category: 'Warning',
-          icon: '⚠️',
-          color: '#D9730D',
-          title: 'Deep Work Constriction',
-          text: `Your deep work blocks dropped significantly over the last 7 days. Friction is accumulating in your professional output.`,
-          action: 'Block out 90 uninterrupted minutes tomorrow morning. Zero email.'
+          title: 'Positive Growth Vector',
+          text: `Your output vector is currently up-trending. Output density increased by ${((avgLast7-avgFirst7)*100/Math.max(avgFirst7,1)).toFixed(0)}% week-over-week.`,
+          action: 'Aggressively defend this state. Reject all non-essential meetings.'
         });
       }
     }
@@ -199,7 +145,7 @@ export default function InsightsTab() {
     }
 
     // 5. Motivation Override (Grace Pause)
-    const recent7IEI = last7.map(e => calculateIEI(e).score); 
+    const recent7IEI = last7.map(e => calculateIEI(e)); 
     if (recent7IEI.length >= 3) {
       const avgIEI = recent7IEI.reduce((a,b)=>a+b, 0) / recent7IEI.length;
       if (avgIEI < 40) {
@@ -228,6 +174,11 @@ export default function InsightsTab() {
     Score: calcScore(history, domain),
     fullMark: 100
   }));
+  const domainScores = radarData.map((d) => ({ label: d.subject, value: d.Score }));
+  const overall =
+    domainScores.length > 0
+      ? Math.round(domainScores.reduce((a, b) => a + (Number(b.value) || 0), 0) / domainScores.length)
+      : 0;
 
   const getWeekNumber = (d) => {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -238,7 +189,7 @@ export default function InsightsTab() {
   
   const weeklyGroups = {};
   [...history].forEach(entry => {
-    const d = new Date(entry.date);
+    const d = new Date(entry.date + 'T00:00:00');
     const weekKey = `W${getWeekNumber(d)}`;
     if (!weeklyGroups[weekKey]) weeklyGroups[weekKey] = [];
     weeklyGroups[weekKey].push(entry);
@@ -255,6 +206,7 @@ export default function InsightsTab() {
   });
 
   const recent14 = [...history].reverse().slice(0, 14).reverse();
+  const filteredRecent = focusDomain === 'All' ? recent14 : recent14;
   const getHeatColor = (score) => {
     if (score === 0) return 'var(--notion-input-bg)';
     if (score < 40) return 'rgba(224, 62, 62, 0.4)'; // Red-ish 
@@ -265,30 +217,147 @@ export default function InsightsTab() {
   const streakDays = Array.from({ length: 90 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (89 - i));
-    return d.toISOString().split('T')[0];
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
   });
   
   const habits = [
-    { label: '🏋️ Workout', check: e => e?.body?.workout === 'yes' },
+    { label: '🏋️ Workout', check: e => e?.body?.workoutType && e.body.workoutType !== 'rest' },
     { label: '🧘 Meditation', check: e => Number(e?.mind?.meditMin) >= 10 },
     { label: '💼 Deep Work', check: e => Number(e?.career?.deepWorkBlocks) >= 2 },
     { label: '🌿 Outdoor', check: e => Number(e?.environ?.outdoorTime) > 30 }
   ];
 
   const financeData = recent14.map(e => ({
-    date: new Date(e.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
+    date: new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
     Spent: Number(e.finance?.spent) || 0
   }));
 
   const correlationData = history
-    .filter(e => e.body?.sleepHr && e.mood?.mood)
+    .filter(e => e.body?.sleepH && e.mood?.mood)
     .map(e => ({
-      sleep: Number(e.body.sleepHr),
+      sleep: Number(e.body.sleepH),
       mood: Number(e.mood.mood),
       date: e.date
     }));
 
   const motivationSpectrumData = recent14.map(e => calculateIEI(e));
+
+  const summary = (() => {
+    const slice = [...history].slice(-14);
+    const avgIEI =
+      motivationSpectrumData.length > 0
+        ? Math.round(
+            motivationSpectrumData.reduce((a, b) => a + Number(b.score || 0), 0) /
+              motivationSpectrumData.length
+          )
+        : 0;
+
+    const top = domains
+      .map((d) => ({ d, s: calcScore(slice, d) }))
+      .sort((a, b) => b.s - a.s)[0];
+
+    const low = domains
+      .map((d) => ({ d, s: calcScore(slice, d) }))
+      .sort((a, b) => a.s - b.s)[0];
+
+    const momentum = (() => {
+      const recent = [...history].reverse().slice(0, 7);
+      const previous = [...history].reverse().slice(7, 14);
+      
+      const calcAvg = (arr) => {
+        if (arr.length === 0) return 0;
+        const sum = arr.reduce((acc, entry) => {
+          let daySum = 0;
+          domains.forEach(d => daySum += calcScore([entry], d));
+          return acc + (daySum / domains.length);
+        }, 0);
+        return sum / arr.length;
+      };
+
+      const avgRecent = calcAvg(recent);
+      const avgPrev = calcAvg(previous);
+      const diff = avgRecent - avgPrev;
+      
+      return {
+        score: Math.round(avgRecent),
+        diff: diff.toFixed(1),
+        status: diff > 2 ? 'Winning' : diff < -2 ? 'Slumping' : 'Steady'
+      };
+    })();
+
+    const dopamineDebt = (() => {
+      const today = [...history].reverse()[0];
+      if (!today) return { ratio: 0, status: 'Neutral' };
+      
+      const consumption = (Number(today.vices?.screenT) || 0) * 20; // weight screen time
+      const creation = ((Number(today.career?.deepWorkBlocks) || 0) * 30) + ((Number(today.mind?.meditMin) || 0) * 2);
+      
+      const ratio = creation === 0 ? (consumption > 0 ? 100 : 0) : Math.min(100, Math.round((consumption / Math.max(creation, 1)) * 50));
+      
+      return {
+        ratio,
+        status: ratio > 60 ? 'Debt' : ratio < 30 ? 'Recovered' : 'Balanced'
+      };
+    })();
+
+    const weeklyIntel = (() => {
+      const last7 = [...history].reverse().slice(0, 7);
+      
+      // 1. Sleep Debt
+      const targetSleep = 7.5;
+      const debt = last7.reduce((acc, e) => acc + (targetSleep - (Number(e.body?.sleepH) || targetSleep)), 0);
+      
+      // 2. Prime Day
+      const dayRatings = {};
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      
+      last7.forEach(e => {
+        const day = new Date(e.date + 'T00:00:00').getDay();
+        const score = (Number(e.reflect?.dayRating) || 0) + (Number(e.career?.deepWorkBlocks) || 0) * 2;
+        if (!dayRatings[day]) dayRatings[day] = [];
+        dayRatings[day].push(score);
+      });
+      
+      let bestDayIdx = -1;
+      let maxAvg = -1;
+      
+      Object.keys(dayRatings).forEach(day => {
+        const avg = dayRatings[day].reduce((a, b) => a + b, 0) / dayRatings[day].length;
+        if (avg > maxAvg) {
+          maxAvg = avg;
+          bestDayIdx = day;
+        }
+      });
+
+      return {
+        sleepDebt: debt.toFixed(1),
+        primeDay: bestDayIdx !== -1 ? dayNames[bestDayIdx] : 'N/A'
+      };
+    })();
+
+    const weeklyScorecard = (() => {
+      const last7 = [...history].reverse().slice(0, 7);
+      
+      // 1. Win/Loss (Day Rating 7+ is a win)
+      const wins = last7.filter(e => Number(e.reflect?.dayRating) >= 7).length;
+      const losses = last7.length - wins;
+      
+      // 2. SCQ (Social Pulse)
+      const meaningful = last7.filter(e => e.relations?.meaningConvo === 'yes').length;
+      const scq = Math.round((meaningful / 7) * 100);
+      
+      // 3. Essentialism Quotient (Creation vs Noise)
+      const creationHours = last7.reduce((acc, e) => {
+        return acc + (Number(e.career?.deepWorkBlocks) || 0) + ((Number(e.mind?.meditMin) || 0) / 60) + ((Number(e.mind?.readMin) || 0) / 60);
+      }, 0);
+      const consumptionHours = last7.reduce((acc, e) => acc + (Number(e.vices?.screenT) || 0), 0);
+      const eq = creationHours === 0 ? 0 : Math.min(100, Math.round((creationHours / (creationHours + consumptionHours)) * 100));
+
+      return { wins, losses, scq, eq };
+    })();
+
+    return { avgIEI, top, low, momentum, dopamineDebt, weeklyIntel, weeklyScorecard };
+  })();
 
   // ==========================================
   // BEHAVIORAL FEEDBACK LOOP (A/B Testing Signal)
@@ -316,59 +385,203 @@ export default function InsightsTab() {
   return (
     <div style={{ animation: 'smoothDropIn 0.3s ease forwards', paddingBottom: '60px' }}>
       
-      <div style={{ marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--notion-text)', marginBottom: '8px' }}>Deep Analytics & Patterns</h2>
-        <p style={{ color: 'var(--notion-gray-text)', fontSize: '14px' }}>System output mapped across 90 days of empirical data.</p>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+        <div>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--notion-text)', marginBottom: '8px' }}>
+            Deep Analytics & Patterns
+          </h2>
+          <p style={{ color: 'var(--notion-gray-text)', fontSize: '14px' }}>
+            System output mapped across your selected window.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <select
+            className="notion-input"
+            value={windowDays}
+            onChange={(e) => setWindowDays(Number(e.target.value))}
+            style={{
+              width: 'auto',
+              height: 34,
+              borderRadius: 8,
+              background: 'var(--notion-input-bg)',
+              border: '1px solid var(--notion-border)',
+            }}
+          >
+            <option value={30}>Last 30 days</option>
+            <option value={60}>Last 60 days</option>
+            <option value={90}>Last 90 days</option>
+          </select>
+
+          <select
+            className="notion-input"
+            value={focusDomain}
+            onChange={(e) => setFocusDomain(e.target.value)}
+            style={{
+              width: 'auto',
+              height: 34,
+              borderRadius: 8,
+              background: 'var(--notion-input-bg)',
+              border: '1px solid var(--notion-border)',
+            }}
+          >
+            {domainOptions.map((d) => (
+              <option key={d} value={d}>
+                Focus: {d}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Top summary widgets */}
+      <div className="analytics-grid" style={{ marginBottom: 16 }}>
+        <KpiCard 
+          className="analytics-span-3" 
+          label="Momentum Arc" 
+          value={summary.momentum.status} 
+          hint={`${summary.momentum.diff > 0 ? '+' : ''}${summary.momentum.diff}% vs last week`} 
+          tone={summary.momentum.status === 'Winning' ? 'good' : summary.momentum.status === 'Slumping' ? 'bad' : 'neutral'} 
+        />
+        <KpiCard 
+          className="analytics-span-3" 
+          label="Dopamine Debt" 
+          value={summary.dopamineDebt.status} 
+          hint={`${summary.dopamineDebt.ratio}% consumption ratio`} 
+          tone={summary.dopamineDebt.status === 'Recovered' ? 'good' : summary.dopamineDebt.status === 'Debt' ? 'bad' : 'neutral'} 
+        />
+        <KpiCard className="analytics-span-3" label="Strongest Area" value={summary.top?.d || '-'} hint="Past 14 days" tone="good" />
+        <KpiCard className="analytics-span-3" label="Focus Required" value={summary.low?.d || '-'} hint="Area of neglect" tone="bad" />
+      </div>
+
+      <div className="analytics-grid" style={{ marginBottom: 32 }}>
+        <GlassChartPanel className="analytics-span-6" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '20px' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(244, 63, 94, 0.1)', display: 'grid', placeItems: 'center', fontSize: '24px' }}>💤</div>
+          <div>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Weekly Sleep Debt</p>
+            <p style={{ fontSize: '20px', fontWeight: 800, color: 'var(--notion-text)' }}>{summary.weeklyIntel.sleepDebt} Hours</p>
+            <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginTop: '2px' }}>Relative to 7.5h nightly target.</p>
+          </div>
+        </GlassChartPanel>
+
+        <GlassChartPanel className="analytics-span-6" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '20px' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.1)', display: 'grid', placeItems: 'center', fontSize: '24px' }}>⚡</div>
+          <div>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Prime Output Day</p>
+            <p style={{ fontSize: '20px', fontWeight: 800, color: 'var(--notion-text)' }}>{summary.weeklyIntel.primeDay}</p>
+            <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginTop: '2px' }}>Your most consistent high-performing day.</p>
+          </div>
+        </GlassChartPanel>
+      </div>
+
+      <div className="analytics-grid" style={{ marginBottom: 32 }}>
+        <GlassChartPanel className="analytics-span-4" style={{ padding: '20px' }}>
+           <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '14px' }}>The Scoreboard</p>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <span style={{ fontSize: '24px', fontWeight: 900, color: 'rgba(16, 185, 129, 1)' }}>{summary.weeklyScorecard.wins}W</span>
+              <span style={{ color: 'var(--notion-border)', fontSize: '20px' }}>/</span>
+              <span style={{ fontSize: '24px', fontWeight: 900, color: 'rgba(244, 63, 94, 1)' }}>{summary.weeklyScorecard.losses}L</span>
+           </div>
+           <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)' }}>Day Rating 7+ counts as a Win.</p>
+        </GlassChartPanel>
+
+        <GlassChartPanel className="analytics-span-4" style={{ padding: '20px' }}>
+           <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '14px' }}>Essentialism Quotient</p>
+           <p style={{ fontSize: '24px', fontWeight: 900, color: '#111111' }}>{summary.weeklyScorecard.eq}%</p>
+           <div style={{ width: '100%', height: '4px', background: 'rgba(15,15,15,0.05)', borderRadius: '2px', marginTop: '10px', overflow: 'hidden' }}>
+              <div style={{ width: `${summary.weeklyScorecard.eq}%`, height: '100%', background: 'var(--premium-accent)' }}></div>
+           </div>
+           <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginTop: '8px' }}>Signal vs. distractors ratio.</p>
+        </GlassChartPanel>
+
+        <GlassChartPanel className="analytics-span-4" style={{ padding: '20px' }}>
+           <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '14px' }}>Social Pulse (SCQ)</p>
+           <p style={{ fontSize: '24px', fontWeight: 900, color: '#111111' }}>{summary.weeklyScorecard.scq}%</p>
+           <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginTop: '8px' }}>Weekly meaningful connection rate.</p>
+        </GlassChartPanel>
       </div>
 
       {/* INTELLIGENCE ENGINE: Insight Cards */}
       {activeInsights.length > 0 && (
         <div style={{ marginBottom: '32px' }}>
-          <h3 style={{ fontSize: '12px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '12px' }}>🧠 Autonomic Insights</h3>
+          <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 0.8, textTransform: 'uppercase', color: 'rgba(15,23,42,0.62)', marginBottom: 10 }}>
+            Autonomic insights
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {activeInsights.map((insight) => (
-              <div key={insight.id} style={{ 
-                background: '#fff', border: `1px solid ${insight.color}40`, borderLeft: `4px solid ${insight.color}`, 
-                borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'
-              }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '18px' }}>{insight.icon}</span>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: insight.color }}>{insight.title}</span>
-                    <span style={{ fontSize: '10px', background: 'var(--notion-input-bg)', padding: '2px 6px', borderRadius: '4px', color: 'var(--notion-gray-text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{insight.category}</span>
+              <div
+                key={insight.id}
+                className="stats-card"
+                style={{
+                  borderRadius: 12,
+                  padding: 16,
+                  background: '#fff',
+                  borderLeft: `4px solid ${insight.color}80`,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                      <span style={{ fontSize: 18 }}>{insight.icon}</span>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--notion-text)', letterSpacing: -0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {insight.title}
+                      </div>
+                      <span className="analytics-pill analytics-pill--neutral">{insight.category}</span>
+                    </div>
+                    <p style={{ fontSize: 13.5, color: 'var(--notion-text)', marginBottom: 12, lineHeight: 1.6 }}>
+                      {insight.text}
+                    </p>
+
+                    <div style={{ background: 'rgba(24,95,165,0.06)', display: 'inline-block', padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(24,95,165,0.12)', marginBottom: 12 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#185FA5' }}>
+                        Action protocol:{' '}
+                        <span style={{ fontWeight: 500, color: 'var(--notion-text)' }}>{insight.action}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => handleFeedback(insight, 'acted')}
+                        className="notion-button"
+                        style={{ width: 'auto', marginTop: 0, padding: '0 12px', height: 32, background: '#185FA5' }}
+                      >
+                        ✓ Will act on this
+                      </button>
+                      <button
+                        onClick={() => handleFeedback(insight, 'helpful')}
+                        className="notion-button"
+                        style={{
+                          width: 'auto',
+                          marginTop: 0,
+                          padding: '0 12px',
+                          height: 32,
+                          background: 'var(--notion-input-bg)',
+                          color: 'var(--notion-text)',
+                          border: '1px solid var(--notion-border)',
+                        }}
+                      >
+                        💡 Helpful context
+                      </button>
+                    </div>
                   </div>
-                  <p style={{ fontSize: '13.5px', color: 'var(--notion-text)', marginBottom: '12px', lineHeight: '1.5' }}>{insight.text}</p>
-                  <div style={{ background: 'rgba(24, 95, 165, 0.05)', display: 'inline-block', padding: '6px 12px', borderRadius: '6px', marginBottom: '16px' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: '#185FA5' }}>Action Protocol: <span style={{ fontWeight: 400, color: 'var(--notion-text)' }}>{insight.action}</span></p>
-                  </div>
-                  
-                  {/* Feedback Action Row (Telemetry) */}
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button 
-                      onClick={() => handleFeedback(insight, 'acted')} 
-                      style={{ background: '#185FA5', color: '#fff', border: 'none', borderRadius: '4px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.2s' }}
-                      onMouseEnter={e => e.target.style.opacity = 0.9} onMouseLeave={e => e.target.style.opacity = 1}
-                    >
-                      ✓ Will Act On This
-                    </button>
-                    <button 
-                      onClick={() => handleFeedback(insight, 'helpful')} 
-                      style={{ background: 'var(--notion-input-bg)', color: 'var(--notion-text)', border: '1px solid var(--notion-border)', borderRadius: '4px', padding: '6px 12px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', transition: 'background 0.2s' }}
-                      onMouseEnter={e => e.target.style.background = 'var(--notion-border)'} onMouseLeave={e => e.target.style.background = 'var(--notion-input-bg)'}
-                    >
-                      💡 Helpful Context
-                    </button>
-                  </div>
+
+                  <button
+                    onClick={() => handleFeedback(insight, 'dismissed')}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--notion-gray-text)',
+                      cursor: 'pointer',
+                      fontSize: 16,
+                      padding: 6,
+                      opacity: 0.7,
+                      flexShrink: 0,
+                    }}
+                    title="Dismiss"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button 
-                  onClick={() => handleFeedback(insight, 'dismissed')}
-                  style={{ background: 'none', border: 'none', color: 'var(--notion-gray-text)', cursor: 'pointer', fontSize: '16px', padding: '4px', opacity: 0.5, transition: 'opacity 0.2s' }}
-                  title="Dismiss (Not useful)"
-                  onMouseEnter={e => e.target.style.opacity = 1}
-                  onMouseLeave={e => e.target.style.opacity = 0.5}
-                >
-                  ✕
-                </button>
               </div>
             ))}
           </div>
@@ -376,154 +589,168 @@ export default function InsightsTab() {
       )}
 
       {/* DASHBOARD CHARTS */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+      <div className="analytics-grid" style={{ marginBottom: 16 }}>
         
         {/* MOTIVATION SPECTRUM VISUALIZER */}
-        <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Motivation Transparency
-            <span style={{ fontSize: '10px', background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '4px', color: '#555', fontWeight: 500 }}>BETA</span>
-          </h3>
-          <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Intrinsic Quality (Deep Blue) vs. Autopilot Compulsion (Silver)</p>
-          <div style={{ height: '300px' }}>
+        <AnalyticsCard
+          className="analytics-span-6"
+          title="Motivation transparency"
+          subtitle="Intrinsic depth vs autopilot tracking over the last 14 days."
+          right={<span className="analytics-pill analytics-pill--neutral">BETA</span>}
+        >
+          <div style={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={motivationSpectrumData}>
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} axisLine={false} tickLine={false} />
+              <BarChart data={motivationSpectrumData} margin={{ top: 10, right: 10, bottom: 6, left: -16 }}>
+                <defs>
+                  <linearGradient id="barGood" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(24,95,165,0.85)" />
+                    <stop offset="100%" stopColor="rgba(24,95,165,0.35)" />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'rgba(15,23,42,0.62)' }} axisLine={false} tickLine={false} />
                 <YAxis hide domain={[0, 100]} />
-                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} contentStyle={{ borderRadius: '4px', fontSize: '12px' }} formatter={(v) => [`${v}/100`, "Quality Score"]} />
-                <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                <Tooltip content={<NotionTooltip />} />
+                <Bar dataKey="score" name="Quality" radius={[12, 12, 12, 12]} isAnimationActive animationDuration={900}>
                   {motivationSpectrumData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.score >= 70 ? '#185FA5' : (entry.score <= 40 ? '#D1D5DB' : '#9CA3AF')} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={
+                        entry.score >= 70
+                          ? 'url(#barGood)'
+                          : entry.score <= 40
+                            ? 'rgba(15,15,15,0.18)'
+                            : 'rgba(15,15,15,0.28)'
+                      }
+                    />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </AnalyticsCard>
 
         {/* 1. NINE-DOMAIN RADAR */}
-        <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Life Area Balance</h3>
-          <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Normalized aggregate scoring across 9 dimensions.</p>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-                <PolarGrid stroke="var(--notion-border)" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} />
-                <Radar name="Score" dataKey="Score" stroke="#185FA5" fill="#185FA5" fillOpacity={0.3} />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <AnalyticsCard
+          className="analytics-span-6"
+          title="Life area balance"
+          subtitle="Whoop-style: overall ring + ranked domain bars."
+        >
+          <GlassChartPanel>
+            <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 14, alignItems: 'center' }}>
+              <ScoreRing value={overall} label="Overall" sublabel={`${windowDays}d window`} />
+              <DomainBars items={domainScores} />
+            </div>
+          </GlassChartPanel>
+        </AnalyticsCard>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-        {/* 2. LONG TERM TRENDS */}
-        <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Weekly Trendlines</h3>
-          <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Momentum of 3 critical variables over time.</p>
-          <div style={{ height: '300px' }}>
+      <div className="analytics-grid" style={{ marginBottom: 16 }}>
+        <AnalyticsCard className="analytics-span-12" title="Weekly trendlines" subtitle="One accent line + muted companions.">
+          <div style={{ height: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData}>
+              <LineChart data={trendData} margin={{ top: 10, right: 10, bottom: 6, left: -18 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} axisLine={false} tickLine={false} />
                 <YAxis hide domain={[0, 100]} />
-                <Tooltip contentStyle={{ fontSize: '12px', borderRadius: '4px', border: '1px solid var(--notion-border)' }} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }}/>
-                <Line type="monotone" dataKey="Career" stroke="#000" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="Mood" stroke="#34C759" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="Body" stroke="#185FA5" strokeWidth={2} dot={{ r: 3 }} />
+                <Tooltip content={<NotionTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', color: 'var(--notion-gray-text)' }}/>
+                <Line type="monotone" name="Body" dataKey="Body" stroke="#185FA5" strokeWidth={2.4} dot={false} isAnimationActive animationDuration={800} />
+                <Line type="monotone" name="Career" dataKey="Career" stroke="rgba(15,15,15,0.28)" strokeWidth={2.0} dot={false} isAnimationActive animationDuration={800} />
+                <Line type="monotone" name="Mood" dataKey="Mood" stroke="rgba(15,15,15,0.20)" strokeWidth={2.0} dot={false} isAnimationActive animationDuration={800} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
-
+        </AnalyticsCard>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-        
-        {/* 3. DAILY PERFORMANCE HEATMAP */}
-        <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>3. Area Heat Matrix (Last 14 Days)</h3>
-          <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Dark blue = Optimal. Red = Needs attention.</p>
-          
-          <div style={{ display: 'flex' }}>
-            {/* Y Axis Labels */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginRight: '8px', marginTop: '20px' }}>
-              {domains.map(d => <div key={d} style={{ height: '20px', fontSize: '10px', color: 'var(--notion-gray-text)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>{d}</div>)}
-            </div>
-            
-            {/* Grid */}
-            <div style={{ flex: 1, overflowX: 'auto' }}>
-              <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                {recent14.map((d, i) => (
-                  <div key={`hx-${i}`} style={{ width: '20px', fontSize: '9px', color: 'var(--notion-gray-text)', textAlign: 'center' }}>
-                    {new Date(d.date).getDate()}
-                  </div>
-                ))}
+      <div className="analytics-grid" style={{ marginBottom: 16 }}>
+        <AnalyticsCard className="analytics-span-6" title="Area heat matrix (14 days)" subtitle="Daily domain intensity at a glance.">
+          <GlassChartPanel>
+            <div style={{ display: 'flex' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginRight: '8px', marginTop: '20px' }}>
+                {domains.map(d => <div key={d} style={{ height: '20px', fontSize: '10px', color: 'rgba(15,15,15,0.62)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontWeight: 700 }}>{d}</div>)}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {domains.map(domain => (
-                  <div key={`row-${domain}`} style={{ display: 'flex', gap: '4px' }}>
-                    {recent14.map((d, i) => {
-                      const score = calcScore([d], domain);
-                      return (
-                        <div 
-                          key={`cell-${i}`} 
-                          title={`${domain} on ${d.date}: ${score}`}
-                          style={{ width: '20px', height: '20px', borderRadius: '4px', background: getHeatColor(score) }} 
-                        />
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 6. CORRELATION ANALYSIS */}
-        <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>4. Correlation Engine: Sleep vs Mood</h3>
-          <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Does your sleep actually predict your mood?</p>
-          <div style={{ height: '250px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -20 }}>
-                <XAxis type="number" dataKey="sleep" name="Sleep Hours" domain={[0, 12]} tick={{ fontSize: 11 }} label={{ value: "Hours Slept", position: "insideBottom", offset: -10, fontSize: 11 }}/>
-                <YAxis type="number" dataKey="mood" name="Mood" domain={[0, 10]} tick={{ fontSize: 11 }} label={{ value: "Mood (1-10)", angle: -90, position: "insideLeft", fontSize: 11 }}/>
-                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                <Scatter name="Days" data={correlationData} fill="#185FA5">
-                  {correlationData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={'#185FA5'} fillOpacity={0.6} />
+              <div style={{ flex: 1, overflowX: 'auto' }}>
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                  {recent14.map((d, i) => (
+                    <div key={`hx-${i}`} style={{ width: '20px', fontSize: '9px', color: 'rgba(15,15,15,0.5)', textAlign: 'center', fontWeight: 700 }}>
+                      {new Date(d.date + 'T00:00:00').getDate()}
+                    </div>
                   ))}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {domains.map(domain => (
+                    <div key={`row-${domain}`} style={{ display: 'flex', gap: '4px' }}>
+                      {recent14.map((d, i) => {
+                        const score = calcScore([d], domain);
+                        return (
+                          <div
+                            key={`cell-${i}`}
+                            title={`${domain} on ${d.date}: ${score !== null ? score : 'No Log'}`}
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '5px',
+                              background:
+                                score === null
+                                  ? 'rgba(15,15,15,0.04)'
+                                  : score < 40
+                                    ? 'rgba(224,62,62,0.4)'
+                                    : score < 70
+                                      ? 'rgba(139,92,246,0.45)'
+                                      : 'rgba(99,102,241,0.7)',
+                              border: '1px solid rgba(15,15,15,0.05)',
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </GlassChartPanel>
+        </AnalyticsCard>
 
+        <AnalyticsCard className="analytics-span-6" title="Correlation engine: sleep vs mood" subtitle="Do your sleep hours predict mood?">
+          <GlassChartPanel>
+            <div style={{ height: 260 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: -10 }}>
+                  <XAxis type="number" dataKey="sleep" name="Sleep Hours" domain={[0, 12]} tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} axisLine={false} tickLine={false} />
+                  <YAxis type="number" dataKey="mood" name="Mood" domain={[0, 10]} tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<NotionTooltip />} />
+                  <Scatter name="Days" data={correlationData} fill="rgba(139,92,246,0.85)">
+                    {correlationData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={'rgba(99,102,241,0.8)'} />
+                    ))}
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+          </GlassChartPanel>
+        </AnalyticsCard>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-        
-        {/* 4. GITHUB STREAKS */}
-        <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>5. Consistency Matrix (90 Days)</h3>
-          <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Did you execute?</p>
-          
+      <div className="analytics-grid">
+        <AnalyticsCard className="analytics-span-6" title={`Consistency matrix (${windowDays} days)`} subtitle="Execution signals over time.">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {habits.map((habit, idx) => (
               <div key={idx}>
-                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>{habit.label}</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px', color: 'var(--notion-text)' }}>{habit.label}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
                   {streakDays.map((dateStr, i) => {
                     const entry = history.find(e => e.date === dateStr);
                     const done = habit.check(entry);
                     return (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         title={`${dateStr}: ${done ? 'Done' : 'Missed'}`}
-                        style={{ width: '10px', height: '10px', borderRadius: '2px', background: done ? '#34C759' : 'rgba(0,0,0,0.05)' }} 
+                        style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '3px',
+                          background: done ? '#185FA5' : 'rgba(15,15,15,0.08)',
+                        }}
                       />
                     );
                   })}
@@ -531,24 +758,26 @@ export default function InsightsTab() {
               </div>
             ))}
           </div>
-        </div>
+        </AnalyticsCard>
 
-        {/* 5. SPENDING BAR CHART */}
-        <div className="stats-card" style={{ background: '#fff' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>6. Liquidity Burn (Last 14 Days)</h3>
-          <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Daily spend velocity.</p>
-          <div style={{ height: '240px' }}>
+        <AnalyticsCard className="analytics-span-6" title="Liquidity burn (14 days)" subtitle="Daily spend velocity.">
+          <div style={{ height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={financeData}>
+                <defs>
+                  <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(139,92,246,0.88)" />
+                    <stop offset="100%" stopColor="rgba(99,102,241,0.55)" />
+                  </linearGradient>
+                </defs>
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11 }} width={40} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} contentStyle={{ borderRadius: '4px', fontSize: '12px' }} formatter={value => [`$${value}`, "Spent"]} />
-                <Bar dataKey="Spent" fill="#000" radius={[4, 4, 0, 0]} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} width={40} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
+                <Tooltip content={<NotionTooltip />} />
+                <Bar dataKey="Spent" name="Spent" fill="url(#spendGrad)" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={800} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-
+        </AnalyticsCard>
       </div>
 
     </div>

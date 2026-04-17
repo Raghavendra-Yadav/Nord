@@ -58,6 +58,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const requestPasswordReset = async (email) => {
+    const { data } = await api.post('/auth/forgotpassword', { email });
+    return data;
+  };
+
+  const resetPassword = async (token, newPassword) => {
+    const { data } = await api.put(`/auth/resetpassword/${token}`, { password: newPassword });
+    // Successful reset returns to login page via UI; no auto-login to prevent partial user states
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem('userInfo');
     setUser(null);
@@ -70,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateXp, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateXp, updateUser, requestPasswordReset, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

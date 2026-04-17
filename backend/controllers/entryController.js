@@ -51,7 +51,7 @@ const getEntriesHistory = async (req, res) => {
     // Calculate cutoff date exactly 'days' ago
     const cutoffNodeDate = new Date();
     cutoffNodeDate.setDate(cutoffNodeDate.getDate() - (days - 1));
-    const cutoffDateStr = cutoffNodeDate.toISOString().split('T')[0];
+    const cutoffDateStr = new Date(cutoffNodeDate.getTime() - cutoffNodeDate.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
     const entries = await Entry.find({ 
       user: req.user.id,

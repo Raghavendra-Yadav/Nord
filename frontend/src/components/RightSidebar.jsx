@@ -26,7 +26,8 @@ export default function RightSidebar() {
   // Calculate Streaks safely based on descending history array
   const calculateStreak = (conditionFn) => {
     let streak = 0;
-    const todayStr = new Date().toISOString().split('T')[0];
+    const dToday = new Date();
+    const todayStr = new Date(dToday.getTime() - dToday.getTimezoneOffset() * 60000).toISOString().split('T')[0];
     
     for (let i = 0; i < history.length; i++) {
       const entry = history[i];

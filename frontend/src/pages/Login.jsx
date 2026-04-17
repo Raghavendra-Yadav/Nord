@@ -82,7 +82,7 @@ const Login = () => {
       </form>
 
       <div style={{ textAlign: 'center', fontSize: 13, marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px', color: 'rgba(55,53,47,0.65)' }}>
-        <a href="#" className="notion-link" style={{fontSize: 13, textDecoration: 'none'}}>Forgot password?</a>
+        <Link to="/forgot-password" className="notion-link" style={{fontSize: 13, textDecoration: 'none'}}>Forgot password?</Link>
         <div>
           Don't have an account? <Link to="/register" className="notion-link">Sign up</Link>
         </div>

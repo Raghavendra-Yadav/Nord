@@ -275,7 +275,7 @@ export default function ExperimentsTab() {
                         {exp.checkIns.map((log, i) => (
                           <div key={i} style={{ display: 'flex', fontSize: '14px', lineHeight: 1.4 }}>
                             <span style={{ color: '#aaa', width: '80px', flexShrink: 0, fontWeight: 500 }}>
-                              {new Date(log.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              {new Date(log.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                             </span>
                             <span style={{ color: '#333' }}>{log.notes}</span>
                           </div>

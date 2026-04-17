@@ -36,7 +36,7 @@ const seedData = async () => {
             body: { 
                 workoutType: isExtrinsic ? 'rest' : 'cardio', 
                 hubermanSunlight: isExtrinsic ? 'no' : 'yes',
-                sleepHr: (7 + Math.random() * 2).toFixed(1)
+                sleepH: (7 + Math.random() * 2).toFixed(1)
             },
             mind: { 
                 meditMin: isExtrinsic ? '' : '15',

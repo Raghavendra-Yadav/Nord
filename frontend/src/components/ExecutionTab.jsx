@@ -10,8 +10,8 @@ export default function ExecutionTab({ date }) {
   
   const [tasks, setTasks] = useState({
     frog: { text: '', completed: false },
-    ivyTasks: Array(6).fill({ text: '', completed: false, poms: 0 }),
-    notToDo: Array(3).fill({ text: '', broken: false })
+    ivyTasks: Array.from({ length: 6 }, () => ({ text: '', completed: false, poms: 0 })),
+    notToDo: Array.from({ length: 3 }, () => ({ text: '', broken: false }))
   });
 
   useEffect(() => {
@@ -22,8 +22,8 @@ export default function ExecutionTab({ date }) {
         if (data) {
           setTasks({
             frog: data.frog || { text: '', completed: false },
-            ivyTasks: data.ivyTasks?.length === 6 ? data.ivyTasks : Array(6).fill({ text: '', completed: false, poms: 0 }),
-            notToDo: data.notToDo?.length === 3 ? data.notToDo : Array(3).fill({ text: '', broken: false })
+            ivyTasks: data.ivyTasks?.length === 6 ? data.ivyTasks : Array.from({ length: 6 }, () => ({ text: '', completed: false, poms: 0 })),
+            notToDo: data.notToDo?.length === 3 ? data.notToDo : Array.from({ length: 3 }, () => ({ text: '', broken: false }))
           });
         }
       } catch (err) {

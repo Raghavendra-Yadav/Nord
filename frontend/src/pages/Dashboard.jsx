@@ -28,7 +28,10 @@ export default function Dashboard() {
   const xp = user?.xp || 0;
   const [mainTab, setMainTab] = useState('log');
   const [activeArea, setActiveArea] = useState('body');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+  });
   
   // Entire state mapped to MongoDB Schema explicitly 
   const [entry, setEntry] = useState({
