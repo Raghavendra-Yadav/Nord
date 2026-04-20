@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Tooltip, ResponsiveContainer, BarChart, Bar, XAxis } from 'recharts';
 import api from '../api/axiosConfig';
-import { GlassChartPanel } from './ui/WhoopAnalytics';
 import { calculateDayAverage } from '../utils/analyticsEngine';
+import { GradientBarReport, SparkBars } from './ui/NordCharts';
 
 export default function MonthTab() {
   const [history, setHistory] = useState([]);
@@ -23,190 +22,254 @@ export default function MonthTab() {
     fetchMonth();
   }, []);
 
-  if (loading) return <div style={{ padding: '40px', color: 'var(--notion-gray-text)' }}>Loading Calendar...</div>;
+  if (loading) return (
+    <div style={{ padding: 40, color: 'var(--notion-gray-text)', fontFamily: 'var(--mono)', fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+      Loading calendar…
+    </div>
+  );
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
-
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
-
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const calendarDays = [];
-  for (let i = 0; i < firstDayOfMonth; i++) {
-    calendarDays.push(null);
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    calendarDays.push(i);
-  }
+  for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(null);
+  for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
 
   const getEntryForDate = (day) => {
     if (!day) return null;
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return history.find((e) => e.date === dateStr);
+    return history.find(e => e.date === dateStr);
   };
-  
+
   let monthlyLogs = 0;
   for (let i = 1; i <= daysInMonth; i++) {
     if (getEntryForDate(i)) monthlyLogs++;
   }
+  const consistencyPct = Math.round((monthlyLogs / daysInMonth) * 100);
 
-  // Calculate deep work array for a chart 
+  // Nord heat colors for calendar
+  const heatColor = (score) => {
+    if (score == null) return undefined;
+    if (score < 40) return 'oklch(0.45 0.18 25 / 0.55)';
+    if (score < 65) return 'oklch(0.62 0.18 295 / 0.45)';
+    if (score < 85) return 'oklch(0.68 0.20 295 / 0.65)';
+    return 'oklch(0.72 0.22 295 / 0.92)';
+  };
+
+  // Deep work bar data (last 14 days)
   const recentDays = Array.from({ length: 14 }).map((_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (13 - i));
-    const dateStr = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    const dateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
     const e = history.find(entry => entry.date === dateStr);
     return {
-      date: dateStr,
-      level: e ? (e.career?.carHours ? parseInt(e.career.carHours) : 1) : 0
+      label: String(d.getDate()).padStart(2, '0'),
+      value: e ? (Number(e.career?.deepWorkBlocks) || 0) : 0
     };
+  });
+  const deepWorkHighlight = recentDays.reduce((best, d, i, arr) => d.value > arr[best].value ? i : best, 0);
+  const totalDeepWork = recentDays.reduce((s, d) => s + d.value, 0);
+
+  // 7-day spark for consistency
+  const last7Logs = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    return history.find(e => e.date === dateStr) ? 100 : 10;
   });
 
   return (
-    <div style={{ animation: 'smoothDropIn 0.3s ease forwards', paddingBottom: '60px' }}>
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+    <div style={{ animation: 'smoothDropIn 0.3s ease forwards', paddingBottom: 60 }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-           <h2 style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--notion-text)', marginBottom: '8px' }}>
-              Monthly Review
-           </h2>
-           <p style={{ color: 'var(--notion-gray-text)', fontSize: '14px' }}>The calendar overview of your consistency.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--notion-text)', marginBottom: 8 }}>
+            Monthly Review
+          </h2>
+          <p style={{ color: 'var(--notion-gray-text)', fontSize: 14 }}>
+            Consistency · {monthNames[month]} {year}
+          </p>
         </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={prevMonth} className="notion-button" style={{ width: 'auto', padding: '0 12px', marginTop: 0, background: 'var(--notion-input-bg)', color: 'var(--notion-text)', border: '1px solid var(--notion-border)' }}>&larr; Prev</button>
-          <span style={{ fontSize: '16px', fontWeight: 700, minWidth: '130px', textAlign: 'center' }}>{monthNames[month]} {year}</span>
-          <button onClick={nextMonth} className="notion-button" style={{ width: 'auto', padding: '0 12px', marginTop: 0, background: 'var(--notion-input-bg)', color: 'var(--notion-text)', border: '1px solid var(--notion-border)' }}>Next &rarr;</button>
+        <div className="seg">
+          <button onClick={prevMonth}>← Prev</button>
+          <button style={{ minWidth: 120, fontWeight: 600, cursor: 'default', pointerEvents: 'none' }} data-active="true">
+            {monthNames[month].slice(0, 3)} {year}
+          </button>
+          <button onClick={nextMonth}>Next →</button>
         </div>
       </div>
 
-      <div className="analytics-grid" style={{ marginBottom: 16 }}>
-        <GlassChartPanel className="analytics-span-8">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '12px' }}>
-              {daysOfWeek.map(day => (
-                <div key={day} style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase' }}>{day}</div>
-              ))}
+      {/* KPI strip */}
+      <div className="grid" style={{ marginBottom: 20 }}>
+        <section className="card col-3" style={{ padding: 20 }}>
+          <div className="card__label">▸ Monthly consistency</div>
+          <div className="kpi-big" style={{ marginBottom: 8 }}>
+            <div className="kpi-big__value tnum" style={{ fontSize: 40 }}>{consistencyPct}%</div>
+            <div className="kpi-big__delta kpi-big__delta--up">{monthlyLogs} of {daysInMonth} days logged</div>
+          </div>
+          <div className="dbar__track" style={{ marginTop: 10 }}>
+            <div className={`dbar__fill${consistencyPct < 50 ? ' dbar__fill--bad' : consistencyPct < 75 ? ' dbar__fill--warn' : ''}`}
+              style={{ '--v': `${consistencyPct}%` }} />
+          </div>
+        </section>
+
+        <section className="card col-3" style={{ padding: 20 }}>
+          <div className="card__label">▸ 7-day streak</div>
+          <div className="kpi-big" style={{ marginBottom: 8 }}>
+            <div className="kpi-big__value tnum" style={{ fontSize: 40 }}>
+              {last7Logs.filter(v => v === 100).length}
+              <small>/7</small>
             </div>
+            <div className="kpi-big__delta">days logged this week</div>
+          </div>
+          <SparkBars values={last7Logs} labels={['M', 'T', 'W', 'T', 'F', 'S', 'S']} />
+        </section>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
-              {calendarDays.map((day, index) => {
-                const entry = getEntryForDate(day);
-                const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
-                
-                const score = entry ? calculateDayAverage(entry) : null;
+        <section className="card col-6" style={{ padding: 20 }}>
+          <div className="card__label card__label--pair">
+            <span>▮ Deep work output · 14 days</span>
+            <span className="mono small dim">{totalDeepWork} blocks total</span>
+          </div>
+          <div style={{ height: 100, marginTop: 8 }}>
+            <GradientBarReport data={recentDays} highlightIdx={deepWorkHighlight} />
+          </div>
+        </section>
+      </div>
 
-                const getBgColor = () => {
-                  if (!day) return 'transparent';
-                  if (!entry) return 'rgba(15, 15, 15, 0.02)'; // Empty logged out day
-                  if (score < 40) return 'rgba(224, 62, 62, 0.4)'; // Low / Warning (Red)
-                  if (score < 65) return 'rgba(99, 102, 241, 0.2)'; // Baseline (Light Indigo)
-                  if (score < 85) return 'rgba(99, 102, 241, 0.5)'; // High Performance
-                  return 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)'; // Elite Performance
-                };
+      {/* Calendar + sidebar */}
+      <div className="grid">
+        {/* Calendar */}
+        <section className="card col-8" style={{ padding: 22 }}>
+          <div className="card__label card__label--pair" style={{ marginBottom: 16 }}>
+            <span>◉ Calendar · {monthNames[month]}</span>
+            <span>{monthlyLogs} logged</span>
+          </div>
 
-                const textColor = entry && score > 2 ? '#fff' : 'var(--notion-text)';
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 10 }}>
+            {daysOfWeek.map(day => (
+              <div key={day} style={{ textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-dim)' }}>
+                {day}
+              </div>
+            ))}
+          </div>
 
-                return (
-                  <div 
-                    key={index} 
-                    onClick={() => entry && setSelectedEntry(entry)}
-                    title={entry ? `Logged! Click to view details.` : day ? `No entry for ${day}` : ''}
-                    style={{ 
-                      aspectRatio: '1', 
-                      background: getBgColor(),
-                      borderRadius: '10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '14px',
-                      fontWeight: isToday ? 800 : 600,
-                      color: textColor,
-                      border: isToday ? '2px solid #111111' : '1px solid rgba(15,15,15,0.06)',
-                      boxShadow: entry && score > 3 ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
-                      opacity: day ? 1 : 0,
-                      cursor: entry ? 'pointer' : 'default',
-                      transform: selectedEntry?.date === entry?.date && entry ? 'scale(1.05)' : 'scale(1)',
-                      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                    }}
-                  >
-                    {day || ''}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+            {calendarDays.map((day, index) => {
+              const entry = getEntryForDate(day);
+              const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+              const score = entry ? calculateDayAverage(entry) : null;
+              const bg = entry ? (heatColor(score) || 'color-mix(in oklch, var(--accent) 25%, transparent)') : undefined;
+
+              return (
+                <div
+                  key={index}
+                  onClick={() => entry && setSelectedEntry(entry)}
+                  title={entry ? `Score ${score} — click to view` : day ? `No log for ${day}` : ''}
+                  style={{
+                    aspectRatio: '1',
+                    background: bg || (day ? 'color-mix(in oklch, var(--fg) 4%, transparent)' : 'transparent'),
+                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 13,
+                    fontWeight: isToday ? 800 : 600,
+                    fontFamily: 'var(--mono)',
+                    color: 'var(--notion-text)',
+                    border: isToday
+                      ? '2px solid var(--accent)'
+                      : selectedEntry?.date === entry?.date && entry
+                        ? '1px solid color-mix(in oklch, var(--accent) 60%, transparent)'
+                        : '1px solid transparent',
+                    boxShadow: entry && score > 65 ? '0 2px 10px color-mix(in oklch, var(--accent) 30%, transparent)' : 'none',
+                    opacity: day ? 1 : 0,
+                    cursor: entry ? 'pointer' : 'default',
+                    transition: 'transform 0.15s ease',
+                  }}
+                >
+                  {day || ''}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="legend">
+            <span><i style={{ background: 'color-mix(in oklch, var(--fg) 4%, transparent)', border: '1px solid var(--line)' }} />No log</span>
+            <span><i style={{ background: heatColor(30) }} />0–40</span>
+            <span><i style={{ background: heatColor(55) }} />40–65</span>
+            <span><i style={{ background: heatColor(72) }} />65–85</span>
+            <span><i style={{ background: heatColor(90) }} />85+</span>
+          </div>
+        </section>
+
+        {/* Sidebar */}
+        <div className="col-4" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {selectedEntry ? (
+            <section className="card card--dark" style={{ padding: 20, animation: 'smoothDropIn 0.2s ease forwards' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                <div>
+                  <div className="card__label">◉ Day detail</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginTop: 4 }}>
+                    {new Date(selectedEntry.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })}
                   </div>
-                );
-              })}
-            </div>
-        </GlassChartPanel>
+                </div>
+                <button
+                  onClick={() => setSelectedEntry(null)}
+                  style={{ background: 'color-mix(in oklch, var(--fg) 8%, transparent)', border: '1px solid var(--line)', borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: 'var(--fg-mute)' }}
+                >
+                  ✕
+                </button>
+              </div>
 
-        <div className="analytics-span-4" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          
-           {selectedEntry ? (
-             <GlassChartPanel style={{ animation: 'smoothDropIn 0.3s ease forwards' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.3px' }}>
-                      {new Date(selectedEntry.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </h3>
-                    <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)' }}>Detail View</p>
-                  </div>
-                  <button 
-                    onClick={() => setSelectedEntry(null)}
-                    style={{ background: 'rgba(15,15,15,0.05)', border: 'none', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', color: 'var(--notion-gray-text)' }}
-                  >Close</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {[
+                    { label: 'Sleep', value: `${selectedEntry.body?.sleepH || '—'}h` },
+                    { label: 'Deep work', value: `${selectedEntry.career?.deepWorkBlocks || '0'} blks` },
+                    { label: 'Spent', value: `$${selectedEntry.finance?.spent || '0'}` },
+                    { label: 'Day rating', value: `${selectedEntry.reflect?.dayRating || '—'}/10` },
+                  ].map(item => (
+                    <div key={item.label} style={{ padding: '10px 12px', background: 'color-mix(in oklch, var(--fg) 5%, transparent)', borderRadius: 8, border: '1px solid var(--line-soft)' }}>
+                      <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--fg-dim)', marginBottom: 4 }}>{item.label}</div>
+                      <div style={{ fontFamily: 'var(--mono)', fontSize: 16, fontWeight: 700, color: 'var(--fg)' }}>{item.value}</div>
+                    </div>
+                  ))}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-                  <div style={{ padding: '12px', background: 'var(--notion-input-bg)', borderRadius: '10px' }}>
-                    <p style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 800, color: 'var(--notion-gray-text)', marginBottom: '6px', letterSpacing: '0.4px' }}>Metrics</p>
-                    <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <p>Sleep: <strong>{selectedEntry.body?.sleepH || '-'}h</strong></p>
-                      <p>Deep Work: <strong>{selectedEntry.career?.deepWorkBlocks || '0'} blks</strong></p>
-                      <p>Spent: <strong>${selectedEntry.finance?.spent || '0'}</strong></p>
-                    </div>
-                  </div>
-                  
-                  <div style={{ padding: '12px', background: 'rgba(99,102,241,0.05)', borderRadius: '10px', border: '1px solid rgba(99,102,241,0.1)' }}>
-                    <p style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 800, color: '#6366F1', marginBottom: '6px', letterSpacing: '0.4px' }}>Reflection</p>
-                    <p style={{ fontSize: '13px', fontStyle: 'italic', lineHeight: '1.5', color: 'var(--notion-text)' }}>
-                      "{selectedEntry.reflect?.wins || selectedEntry.reflect?.gratitude || 'No reflection logged.'}"
+                {(selectedEntry.reflect?.wins || selectedEntry.reflect?.gratitude) && (
+                  <div style={{ padding: '10px 12px', background: 'color-mix(in oklch, var(--accent) 8%, transparent)', borderRadius: 8, border: '1px solid color-mix(in oklch, var(--accent) 20%, transparent)' }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>Reflection</div>
+                    <p style={{ fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.55, color: 'var(--fg-mute)' }}>
+                      "{selectedEntry.reflect?.wins || selectedEntry.reflect?.gratitude}"
                     </p>
                   </div>
-                </div>
-             </GlassChartPanel>
-           ) : (
-             <GlassChartPanel style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--notion-gray-text)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.6px' }}>Consistency ({monthNames[month]})</p>
-                <p style={{ fontSize: '42px', fontWeight: 800, color: '#111111', letterSpacing: '-1px' }}>{Math.round((monthlyLogs / daysInMonth) * 100)}%</p>
-                <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', textAlign: 'center', marginTop: '8px' }}>
-                  {monthlyLogs} of {daysInMonth} days logged.
-                </p>
-             </GlassChartPanel>
-           )}
-
-           <GlassChartPanel>
-              <p style={{ fontSize: '13px', fontWeight: 700, marginBottom: '6px' }}>Deep Work Output</p>
-              <p style={{ fontSize: '12px', color: 'var(--notion-gray-text)', marginBottom: '16px' }}>Recent 14 day session lengths.</p>
-              
-              <div style={{ height: '140px', width: '100%', marginTop: '10px' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={recentDays} margin={{ top: 0, right: 0, left: -24, bottom: 0 }}>
-                    <XAxis dataKey="date" tickFormatter={str => new Date(str + 'T00:00:00').getDate()} tick={{ fontSize: 11, fill: 'var(--notion-gray-text)' }} axisLine={false} tickLine={false} />
-                    <defs>
-                      <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#6366F1" />
-                        <stop offset="100%" stopColor="rgba(99,102,241,0.2)" />
-                      </linearGradient>
-                    </defs>
-                    <Bar dataKey="level" fill="url(#barGrad)" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={900} />
-                  </BarChart>
-                </ResponsiveContainer>
+                )}
               </div>
-           </GlassChartPanel>
-
+            </section>
+          ) : (
+            <section className="card card--dark" style={{ padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div className="card__label" style={{ justifyContent: 'center', marginBottom: 10 }}>◆ {monthNames[month]} consistency</div>
+              <div className="kpi-big__value tnum" style={{ fontSize: 52, marginBottom: 4 }}>{consistencyPct}%</div>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--fg-dim)', letterSpacing: '0.08em' }}>
+                {monthlyLogs} of {daysInMonth} days
+              </div>
+              <div className="dbar__track" style={{ width: '100%', marginTop: 16 }}>
+                <div className={`dbar__fill${consistencyPct < 50 ? ' dbar__fill--bad' : consistencyPct < 75 ? ' dbar__fill--warn' : ''}`}
+                  style={{ '--v': `${consistencyPct}%` }} />
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--fg-dim)', marginTop: 12 }}>
+                Click any logged day to see details.
+              </p>
+            </section>
+          )}
         </div>
       </div>
 

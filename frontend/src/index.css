@@ -1018,3 +1018,52 @@ body {
   border-radius: 50%;
   box-shadow: 0 0 10px currentcolor;
 }
+
+/* =====================================================
+   NORD · Deep Analytics design tokens
+   ===================================================== */
+:root {
+  --accent-h: 295;
+  --accent:        oklch(0.70 0.20 var(--accent-h));
+  --accent-deep:   oklch(0.48 0.22 277);
+  --accent-cool:   oklch(0.72 0.18 335);
+  --accent-strong: oklch(0.62 0.24 var(--accent-h));
+
+  --bg:         oklch(0.14 0.01 280);
+  --bg-raised:  oklch(0.17 0.013 285);
+  --bg-card:    oklch(0.19 0.015 285);
+  --bg-card-2:  oklch(0.22 0.018 288);
+  --line:       oklch(0.30 0.015 285 / 0.55);
+  --line-soft:  oklch(0.30 0.015 285 / 0.25);
+
+  --fg:      oklch(0.97 0.005 285);
+  --fg-mute: oklch(0.75 0.01 285);
+  --fg-dim:  oklch(0.55 0.01 285);
+
+  --good: oklch(0.78 0.15 150);
+  --warn: oklch(0.78 0.15 70);
+  --bad:  oklch(0.68 0.20 25);
+
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --shadow-card: 0 1px 0 0 oklch(1 0 0 / 0.04) inset, 0 20px 40px -24px oklch(0 0 0 / 0.6);
+  --shadow-glow: 0 0 60px -10px oklch(0.70 0.22 var(--accent-h) / 0.35);
+
+  --sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+[data-theme="light"] {
+  --bg:        oklch(0.985 0.003 285);
+  --bg-raised: oklch(0.96 0.004 285);
+  --bg-card:   #ffffff;
+  --bg-card-2: oklch(0.97 0.005 285);
+  --line:      oklch(0.15 0.01 285 / 0.10);
+  --line-soft: oklch(0.15 0.01 285 / 0.06);
+  --fg:        oklch(0.18 0.01 285);
+  --fg-mute:   oklch(0.35 0.01 285);
+  --fg-dim:    oklch(0.55 0.01 285);
+  --shadow-card: 0 1px 0 0 oklch(1 0 0 / 1) inset, 0 24px 48px -28px oklch(0.55 0.22 295 / 0.25);
+}

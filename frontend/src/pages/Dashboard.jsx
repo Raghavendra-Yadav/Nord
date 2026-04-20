@@ -227,7 +227,7 @@ export default function Dashboard() {
 
       {/* Main Content Pane */}
       <main className="notion-main">
-        <div className="notion-dashboard">
+        <div className="notion-dashboard" data-theme="light">
           
           <header className="dashboard-header">
             <h1 style={{ fontSize: '24px', fontWeight: 600, letterSpacing: '-0.5px' }}>
